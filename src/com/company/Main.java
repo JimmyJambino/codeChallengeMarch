@@ -7,10 +7,13 @@ import java.util.Vector;
 public class Main {
 
     public static void main(String[] args) {
-        Menu menu = new Menu();
+        Menu menu = new Menu(new ManagementSystem());
         //menu.mainMenu();
         //menu.mainGui();
-        menu.loginScreen();
+        //menu.loginMenu();
+        menu.dialogTest();
+        JDBCWriter writer = new JDBCWriter();
+
 
     }
     public static void main2(String[] args) {

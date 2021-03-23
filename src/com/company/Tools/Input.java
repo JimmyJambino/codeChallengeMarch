@@ -6,9 +6,10 @@ public class Input {
 
 
 
-    public static String inputString() {
+    public static String inputString(String prompt) {
+        System.out.println(prompt);
         Scanner scanner = new Scanner(System.in);
-        return ""   ;
+        return scanner.next();
     }
 
     public static String inputCalendarDate() {
@@ -16,4 +17,8 @@ public class Input {
     }
 
     //if we use a swing application then we can maybe make this easier in terms of verification?
+    //SWING inputs
+    public static String swingInputString() {
+        return "";
+    }
 }
