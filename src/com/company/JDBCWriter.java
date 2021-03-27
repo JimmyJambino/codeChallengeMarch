@@ -9,7 +9,7 @@ public class JDBCWriter {
 
     Connection connection;
 
-    public Connection setConnection(String username, String password) {
+    public void setConnection(String username, String password) {
 
         //TODO: Change kindergarten to proper database, also have method to initialize database
         final String url = String.format("jdbc:mysql://localhost?user=%s?serverTimezone=UTC",username);
@@ -32,6 +32,10 @@ public class JDBCWriter {
         } catch (SQLException ioerr) {
             System.out.println("Not connected =" + ioerr.getMessage());
         }
+        this.connection = connection;
+    }
+
+    public Connection getConnection() {
         return connection;
     }
 }
