@@ -8,8 +8,8 @@ public class Main {
 
     public static void main(String[] args) {
         Menu menu = new Menu(new ManagementSystem());
-        menu.mainMenu();
-       // menu.mainGui();
+        //menu.mainMenu();
+        menu.mainGui();
         //menu.loginMenu();
         //menu.dialogTest();
         JDBCWriter writer = new JDBCWriter();
