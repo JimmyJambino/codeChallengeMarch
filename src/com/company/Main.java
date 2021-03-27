@@ -9,9 +9,9 @@ public class Main {
     public static void main(String[] args) {
         Menu menu = new Menu(new ManagementSystem());
         //menu.mainMenu();
-        menu.mainGui();
+        menu.startMenu();
         //menu.loginMenu();
-        //menu.dialogTest();
+        menu.dialogTest();
         JDBCWriter writer = new JDBCWriter();
 
 

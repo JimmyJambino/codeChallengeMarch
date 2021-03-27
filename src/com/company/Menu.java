@@ -17,8 +17,8 @@ public class Menu {
     private Dimension resolution = Toolkit.getDefaultToolkit().getScreenSize();
     private int screenWidth = (int)resolution.getWidth();
     private int screenHeight = (int)resolution.getHeight();
-    private int width = 800;
-    private int height = 800;
+    private int width = 400;
+    private int height = 400;
 
     private int xBounds = (screenWidth-width)/2; //TODO: Put all this into a method, and check for cases where screen < width etc.
     private int yBounds = (screenHeight-height)/2;
@@ -120,7 +120,7 @@ public class Menu {
 
     }
 
-    public void mainGui() {
+    public void startMenu() {
         JFrame.setDefaultLookAndFeelDecorated(true); // *chefs kiss*
         //JFrame frame = new JFrame("Layout");
         frame = new JFrame("Layout");
@@ -134,32 +134,38 @@ public class Menu {
         // Put constraints on different buttons
         gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
         int paddingSize = 3;
-        gbc.insets = new Insets(paddingSize,paddingSize,paddingSize,paddingSize); // Padding
+        int paddingWidth = 30; // TODO: Should be based on box size
+        gbc.insets = new Insets(paddingSize,paddingWidth,paddingSize,paddingSize); // Padding
         gbc.gridx = 0; // x position, goes left to right
         gbc.gridy = 0; // y position, goes top to bottom
+        gbc.weightx = 1; // Fills out the entire empty space on x-axis
         JButton button1 = new JButton("Manage Clients");
         panel.add(button1, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
-        panel.add(new JButton("Button 2"), gbc);
+        JButton button2 = new JButton("Manage Appointments");
+        panel.add(button2, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
-        gbc.gridwidth = 3;
-        panel.add(new JButton("Button 3"), gbc);
+        //gbc.gridwidth = 3;
+        panel.add(new JButton("Show Client List"), gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 5;
-        gbc.gridheight = 10;
-        gbc.gridwidth = 10;
-        panel.add(new JButton("Button 5"), gbc);
+        //gbc.gridheight = 10;
+        //gbc.gridwidth = 10;
+        panel.add(new JButton("Check Calendar"), gbc);
 
+        panel.setSize(400,200);
         Container container = frame.getContentPane();
+        container.setSize(400,300);
         container.add(panel);
         frame.pack();
+        frame.setBounds((screenWidth-width)/2,(screenHeight-height)/2,width,height); // x and y are pixel location on startup
         frame.setVisible(true);
-        frame.setBounds(100,100,600,200); // figure out a standard window size
+        //frame.setBounds(100,100,600,200); // figure out a standard window size
     }
 
     // First check if a txtfile named login exists, if not, ask for database login and if connection is good, save that info in a login.txt
@@ -265,7 +271,7 @@ public class Menu {
         } else {
             JDialog dialog = new JDialog(frame,"Example",true);
             dialog.setLayout(new GridBagLayout());
-            frame = new JFrame("Login");
+            //frame = new JFrame("Login"); // Don't need this one, it will only make another "empty" window
             // top ignore
             JPanel panel = new JPanel();
             GridBagLayout layout = new GridBagLayout(); //
@@ -309,13 +315,17 @@ public class Menu {
             dialog.add(clear, gbc);
 
             login.addActionListener(A -> setLoginCredentials(usernameField.getText(),passwordField.getText()));
-            clear.addActionListener(A -> clearFrame(frame));
-            Container container = frame.getContentPane();
+            //clear.addActionListener(A -> clearFrame(frame)); // Remove this function from this dialog
+            //Container container = frame.getContentPane();
             //container.add(panel);
+            /*
             frame.pack();
             frame.setVisible(true);
             frame.setBounds(100,100,600,200); // figure out a standard window size
+
+             */
             dialog.setSize(300,300); //TODO: Change start position on screen.
+            dialog.setBounds((screenWidth-300)/2,(screenHeight-300)/2,300,300);
             dialog.setVisible(true); //TODO: This one needs info, so the background (frame) is actually unnecessary.
         }
     }
