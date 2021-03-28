@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 public class Appointment {
-    private Client client = new Client("testName",0,"testNote");
+    private Client client;
     private Date calendarDate = new Date();
 
     public Appointment(Client client, String calendarDate) {
@@ -23,5 +23,13 @@ public class Appointment {
             System.out.println("Wrong date format: " + parseException);
         }
         this.calendarDate = date;
+    }
+
+    public Client getClient() {
+        return client;
+    }
+
+    public Date getCalendarDate() {
+        return calendarDate;
     }
 }

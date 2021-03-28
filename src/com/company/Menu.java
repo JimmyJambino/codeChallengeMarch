@@ -1,11 +1,13 @@
 package com.company;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.sql.SQLException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -17,8 +19,8 @@ public class Menu {
     private Dimension resolution = Toolkit.getDefaultToolkit().getScreenSize();
     private int screenWidth = (int)resolution.getWidth();
     private int screenHeight = (int)resolution.getHeight();
-    private int width = 400;
-    private int height = 400;
+    private int width = 700;
+    private int height = 700;
 
     private int xBounds = (screenWidth-width)/2; //TODO: Put all this into a method, and check for cases where screen < width etc.
     private int yBounds = (screenHeight-height)/2;
@@ -29,18 +31,33 @@ public class Menu {
     public JTable tableConstructor(ArrayList<TableInformation> list) { // If I have to keep constructing this, then perhaps a LinkedList is faster?
         // Nvm iteration for loops is the same. We are not constructing new List here, only a new array which is fast.
         // In which case, searching through an ArrayList is faster than a LinkedList.
-        int columnCount = list.get(0).getColumnCount(); //  We are assuming only one type of class in the list
-        // is in this list, so "just" look at the first objects information.
+        int columnCount;
+        String[] columnNames;
+
+        if(list.size() == 0) { // The first bootup when there are no clients.
+            columnCount = 0;
+            String[] temp = {"No data available"}; // Can't initialize a String[] after it's been declared, so we must use a temporary String[] to assign value.
+            columnNames = temp;
+
+        } else {
+            columnCount = list.get(0).getColumnCount();
+            columnNames = list.get(0).getColumnNames(); // same as before, it will be the same object throughout the list
+        }
+
         Object[][] data = new Object[list.size()][columnCount]; // [rowCount][columnCount]
-        String[] columnNames = list.get(0).getColumnNames(); // same as before, it will be the same object throughout the list
+
 
         for(int i = 0; i < list.size(); i++) { // For each object
             for(int j = 0; j < columnCount; j++) { // For each column
                 data[i][j] = list.get(i).getColumnInfo()[j];
             }
         }
-        JTable table = new JTable(data,columnNames);
-
+        //JTable table = new JTable(data,columnNames);
+        JTable table = new JTable(data,columnNames){
+            public boolean editCellAt(int row, int column, java.util.EventObject e) {
+                return false;
+            }
+        };
         return table;
     }
 
@@ -54,7 +71,7 @@ public class Menu {
                 "Delete-On-Update"
         };
         Object[][] data = {
-                {client.name,client.age,client.note,true},
+                {"string name","int age","string note",true},
                 {"Jungne",26,"Yohoho he be a pirate",true}
         };
 
@@ -120,6 +137,42 @@ public class Menu {
 
     }
 
+    // Shows all current clients and allows the user to add or delete clients, as well as search for specific parameters.
+    public JPanel manageClientPanel() {
+        // Window Setup
+        ArrayList clientList = managementSystemReference.getClientList();
+        for(int i = 0; i < 5; i++) {
+            clientList.add(new Client("listTest",i,"notedddd"));
+        }
+        JTable clientTable = tableConstructor(clientList);
+        JScrollPane scrollPane = new JScrollPane(clientTable);
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        frame.setTitle("Client Management Menu");
+
+        // GBC Setup
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
+        int paddingSize = 1;
+        int paddingWidth = 30; // TODO: Should be based on box size
+        gbc.insets = new Insets(paddingSize,paddingWidth,paddingSize,paddingWidth); // Padding
+        gbc.weightx = 1; // Fills out the entire empty space on x-axis
+
+        // Panel setup
+        gbc.gridy = 0;
+        panel.add(scrollPane,gbc);
+
+        gbc.gridx = 0; // x position, goes left to right
+        gbc.gridy = 1; // y position, goes top to bottom
+        JButton button1 = new JButton("Print index");
+        button1.addActionListener(A -> ManagementSystem.printSelectedRowIndex(clientTable));
+        // Enable button with checkRowSelection?
+        panel.add(button1,gbc);
+
+
+        return panel;
+
+    }
+
     public void startMenu() {
         JFrame.setDefaultLookAndFeelDecorated(true); // *chefs kiss*
         //JFrame frame = new JFrame("Layout");
@@ -127,24 +180,48 @@ public class Menu {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel panel = new JPanel();
+
+        Container container = frame.getContentPane();
+        container.add(startMenuPanel());
+        frame.pack();
+        frame.setBounds((screenWidth-width)/2,(screenHeight-height)/2,width,height); // x and y are pixel location on startup
+        frame.setVisible(true);
+        //frame.setBounds(100,100,600,200); // figure out a standard window size
+    }
+
+    // Works for now.
+    private void changePanel(JPanel panel) {
+        frame.getContentPane().removeAll();
+        frame.getContentPane().add(panel);
+        frame.getContentPane().doLayout();
+        frame.getContentPane().validate(); //reValidate() instead?
+        frame.update(frame.getGraphics());
+    }
+
+    public JPanel startMenuPanel() {
+        System.out.println("New Panel");
+        JPanel panel = new JPanel();
         GridBagLayout layout = new GridBagLayout(); //
         panel.setLayout(layout);
         GridBagConstraints gbc = new GridBagConstraints();
 
         // Put constraints on different buttons
         gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
-        int paddingSize = 3;
+        int paddingSize = 1;
         int paddingWidth = 30; // TODO: Should be based on box size
-        gbc.insets = new Insets(paddingSize,paddingWidth,paddingSize,paddingSize); // Padding
+        gbc.insets = new Insets(paddingSize,paddingWidth,paddingSize,paddingWidth); // Padding
         gbc.gridx = 0; // x position, goes left to right
         gbc.gridy = 0; // y position, goes top to bottom
         gbc.weightx = 1; // Fills out the entire empty space on x-axis
         JButton button1 = new JButton("Manage Clients");
+        button1.addActionListener(A -> changePanel(startMenuPanel()));
+
         panel.add(button1, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
         JButton button2 = new JButton("Manage Appointments");
+        button2.addActionListener(A -> changePanel(manageClientPanel()));
         panel.add(button2, gbc);
 
         gbc.gridx = 0;
@@ -154,83 +231,75 @@ public class Menu {
 
         gbc.gridx = 0;
         gbc.gridy = 5;
-        //gbc.gridheight = 10;
-        //gbc.gridwidth = 10;
+
         panel.add(new JButton("Check Calendar"), gbc);
 
-        panel.setSize(400,200);
-        Container container = frame.getContentPane();
-        container.setSize(400,300);
-        container.add(panel);
-        frame.pack();
-        frame.setBounds((screenWidth-width)/2,(screenHeight-height)/2,width,height); // x and y are pixel location on startup
-        frame.setVisible(true);
-        //frame.setBounds(100,100,600,200); // figure out a standard window size
+        String title1 = " _____ _____ _____ _____ _____ _____ __ __      _____ _____ _____ _____ _____ _____ _____ ";
+        String title2 = "|_   _|  |  |   __| __  |  _  |  _  |  |  |    |     |  _  |   | |  _  |   __|   __| __  |";
+        String title3 = "  | | |     |   __|    -|     |   __|_   _|    | | | |     | | | |     |  |  |   __|    -|";
+        String title4 = "  |_| |__|__|_____|__|__|__|__|__|    |_|      |_|_|_|__|__|_|___|__|__|_____|_____|__|__|";
+        gbc.gridy = 6;
+        JLabel label1 = new JLabel(title1);
+        label1.setFont(new Font("Monospaced", Font.PLAIN,12));
+        panel.add(label1, gbc);
+        gbc.gridy = 7;
+        JLabel label2 = new JLabel(title2);
+        label2.setFont(new Font("Monospaced", Font.PLAIN,12));
+        panel.add(label2, gbc);
+        gbc.gridy = 8;
+        JLabel label3 = new JLabel(title3);
+        label3.setFont(new Font("Monospaced", Font.PLAIN,12));
+        panel.add(label3, gbc);
+        gbc.gridy = 9;
+        JLabel label4 = new JLabel(title4);
+        label4.setFont(new Font("Monospaced", Font.PLAIN,12));
+        panel.add(label4, gbc);
+
+        gbc.gridy = 10;
+        try {
+            BufferedImage image = ImageIO.read(new File("edit.png"));
+            JLabel labelPic = new JLabel(new ImageIcon(image.getScaledInstance(200,200, Image.SCALE_FAST)));
+            //labelPic.setBounds(10,10,10,10);
+            panel.add(labelPic,gbc);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return panel;
     }
 
     // First check if a txtfile named login exists, if not, ask for database login and if connection is good, save that info in a login.txt
-    public void loginMenu() {
+    public void checkLogin() {
         if(readLoginFile("login")) { // method that reads file and checks if it exists
             //TODO: Connect to DB, if gotConnection then...go to main menu
             managementSystemReference.setupJDBC(username,password); // username and password may be wrong, how to deal?
             // Maybe just go to login menu in case there is an error.
-
-        } else { //TODO: Create file upon successfull connection
-            frame = new JFrame("Login");
-            JPanel panel = new JPanel();
-            GridBagLayout layout = new GridBagLayout(); //
-            panel.setLayout(layout);
-            GridBagConstraints gbc = new GridBagConstraints();
-
-            //########## GRIDBAGCONSTRAINTS SETTINGS ################
-            gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
-            int paddingSize = 3;
-            gbc.insets = new Insets(paddingSize,paddingSize,paddingSize,paddingSize); // Padding
-            //#######################################################
-
-            JLabel usernameText = new JLabel("USERNAME: ");
-            JLabel passwordText = new JLabel("PASSWORD: ");
-            JTextField usernameField = new JTextField("USERNAME");
-            JTextField passwordField = new JTextField("PASSWORD");
-            JButton login = new JButton("Login");
-
-            gbc.gridx = 0; // x position, goes left to right
-            gbc.gridy = 0; // y position, goes top to bottom
-            panel.add(usernameText, gbc);
-            gbc.gridx = 1;
-            panel.add(usernameField, gbc);
-
-            gbc.gridx = 0;
-            gbc.gridy = 1;
-            panel.add(passwordText, gbc);
-            gbc.gridx = 1;
-            panel.add(passwordField, gbc);
-
-            gbc.gridx = 0;
-            gbc.gridy = 2;
-            gbc.gridwidth = 2;
-            panel.add(login, gbc);
-
-            JButton clear = new JButton("Clear");
-            gbc.gridx = 0;
-            gbc.gridy = 3;
-            gbc.gridwidth = 2;
-            panel.add(clear, gbc);
-
-            login.addActionListener(A -> setLoginCredentials(usernameField.getText(),passwordField.getText()));
-            clear.addActionListener(A -> clearFrame(frame));
-            Container container = frame.getContentPane();
-            container.add(panel);
-            frame.pack();
-            frame.setVisible(true);
-            frame.setBounds(100,100,600,200); // figure out a standard window size
+        } else {
+            System.out.println("loginMenu");
+            loginMenu(loginMenuContainer());
         }
 
+    }
+    public void loginMenu(Container container) {
+        frame = new JFrame("Login");
+
+        //Container container = frame.getContentPane();
+        //container.add(panel);
+        frame.setContentPane(container);
+        frame.pack();
+        frame.setVisible(true);
+        frame.setBounds(100,100,600,200); // figure out a standard window size
     }
     public void setLoginCredentials(String username, String password) {
         this.username = username;
         this.password = password;
         System.out.println("Username: "+username + " Password: " + password);
+        try {
+            PrintStream output = new PrintStream(new File("login.txt"));
+            output.println(username);
+            output.println(password);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -251,9 +320,10 @@ public class Menu {
         }
     }
 
+    // Doesn't work as intended. Use a container replacement instead.
     public void clearFrame(JFrame frame) { //TODO: Make this method nicer, consider making JFrame a class variable
         frame.getContentPane().removeAll(); // Removes all content
-        //frame.getContentPane().revalidate(); // What does this do?
+        frame.getContentPane().revalidate(); // What does this do?
         frame.getContentPane().repaint(); // Repaints the window
     }
 
@@ -329,8 +399,51 @@ public class Menu {
             dialog.setVisible(true); //TODO: This one needs info, so the background (frame) is actually unnecessary.
         }
     }
-    public void startFrame() {
+    public Container loginMenuContainer() {
+        JPanel panel = new JPanel();
+        GridBagLayout layout = new GridBagLayout(); //
+        panel.setLayout(layout);
+        GridBagConstraints gbc = new GridBagConstraints();
 
+        //########## GRIDBAGCONSTRAINTS SETTINGS ################
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
+        int paddingSize = 3;
+        gbc.insets = new Insets(paddingSize,paddingSize,paddingSize,paddingSize); // Padding
+        //#######################################################
+
+        JLabel usernameText = new JLabel("USERNAME: ");
+        JLabel passwordText = new JLabel("PASSWORD: ");
+        JTextField usernameField = new JTextField("USERNAME");
+        JTextField passwordField = new JTextField("PASSWORD");
+        JButton login = new JButton("Login");
+
+        gbc.gridx = 0; // x position, goes left to right
+        gbc.gridy = 0; // y position, goes top to bottom
+        panel.add(usernameText, gbc);
+        gbc.gridx = 1;
+        panel.add(usernameField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(passwordText, gbc);
+        gbc.gridx = 1;
+        panel.add(passwordField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        panel.add(login, gbc);
+
+        JButton clear = new JButton("Clear");
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
+        panel.add(clear, gbc);
+
+        login.addActionListener(A -> setLoginCredentials(usernameField.getText(),passwordField.getText()));
+        Container container = new Container();
+        container.add(panel);
+        return container;
     }
 
 
