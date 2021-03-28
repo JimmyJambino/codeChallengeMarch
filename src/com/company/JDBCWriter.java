@@ -20,18 +20,33 @@ public class JDBCWriter {
             connection = DriverManager.getConnection(url, username, password);
             Statement statement = connection.createStatement();
             String createDatabase = "CREATE DATABASE IF NOT EXISTS ManagementSystem;" +
-                    "\nCREATE TABLE ManagementSystem.tblClients(" +
+                    "CREATE TABLE IF NOT EXISTS ManagementSystem.tblClients(" +
                     "client_id INT NOT NULL UNIQUE PRIMARY KEY AUTO_INCREMENT, " +
                     "client_name VARCHAR(50) NOT NULL, " +
                     "client_age INT NOT NULL, " +
                     "client_note VARCHAR(300)" + //TODO: Make sure note string can't be longer than 300 chars
                     ");" +
-                    "\nCREATE TABLE ManagementSystem.tblAppointments(" +
+                    "\nCREATE TABLE IF NOT EXISTS ManagementSystem.tblAppointments(" +
                     "appointment_date DATE NOT NULL, " +
                     "appointment_client INT NOT NULL, " +
                     "client_fk FOREIGN KEY (appointment_client) REFERENCES Clients(client_id)" +
                     ");";
-            statement.executeUpdate(createDatabase);
+
+            String createDatabaseSQL = "CREATE DATABASE IF NOT EXISTS ManagementSystem;";
+            String tableClientSQL = "CREATE TABLE IF NOT EXISTS ManagementSystem.tblClients(" +
+                    "client_id INT NOT NULL UNIQUE PRIMARY KEY AUTO_INCREMENT, " +
+                    "client_name VARCHAR(50) NOT NULL, " +
+                    "client_age INT NOT NULL, " +
+                    "client_note VARCHAR(300)" + //TODO: Make sure note string can't be longer than 300 chars
+                    ");";
+            String tableAppointmentSQL = "CREATE TABLE IF NOT EXISTS ManagementSystem.tblAppointments(" +
+                    "appointment_date DATE NOT NULL, " +
+                    "appointment_client INT NOT NULL, " +
+                    "client_fk FOREIGN KEY (appointment_client) REFERENCES Clients(client_id)" +
+                    ");";
+            statement.executeUpdate(createDatabaseSQL);
+            statement.executeUpdate(tableClientSQL);
+            statement.executeUpdate(tableAppointmentSQL);
             managementSystemReference.setHasConnection(true);
 
         } catch (SQLException ioerr) {
