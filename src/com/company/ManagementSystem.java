@@ -9,12 +9,12 @@ import java.util.Date;
 
 public class ManagementSystem {
 
-    JDBCWriter writer = new JDBCWriter();
+    JDBCWriter writer = new JDBCWriter(this);
     JDBCReader reader = new JDBCReader();
     private Menu menu = new Menu(this);
     private ArrayList<TableInformation> appointmentList = new ArrayList<>();
     private ArrayList<TableInformation> clientList = new ArrayList<>();
-
+    private boolean hasConnection = false;
 
     public ManagementSystem() {
     }
@@ -46,8 +46,15 @@ public class ManagementSystem {
     }
 
 
-    public void addClientToList() {
+    public void addClientToList(Client client) {
+        clientList.add(client);
+    }
 
+    public void setHasConnection(boolean hasConnection) {
+        this.hasConnection = hasConnection;
+    }
+    public boolean getHasConnection() {
+        return hasConnection;
     }
 
 }

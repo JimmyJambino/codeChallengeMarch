@@ -168,18 +168,89 @@ public class Menu {
         // Enable button with checkRowSelection?
         panel.add(button1,gbc);
 
+        gbc.gridy = 2;
+        JButton button2 = new JButton("Add new Client");
+        button2.addActionListener(A -> changePanel(addClientPanel()));
+        panel.add(button2,gbc);
+
 
         return panel;
 
     }
 
-    public void startMenu() {
+    public JPanel addClientPanel() {
+        JPanel panel = new JPanel();
+        GridBagLayout layout = new GridBagLayout(); //
+        panel.setLayout(layout);
+        // bot ignore
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        //########## GRIDBAGCONSTRAINTS SETTINGS ################
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
+        int paddingSize = 3;
+        gbc.insets = new Insets(paddingSize,paddingSize,paddingSize,paddingSize); // Padding
+        //#######################################################
+
+        JLabel usernameText = new JLabel("Name: ");
+        JLabel passwordText = new JLabel("Age: ");
+        JTextField usernameField = new JTextField("");
+        JTextField passwordField = new JTextField("AGE");
+        JButton saveClient = new JButton("Save Client");
+
+        gbc.gridx = 0; // x position, goes left to right
+        gbc.gridy = 0; // y position, goes top to bottom
+        panel.add(usernameText, gbc);
+        gbc.gridx = 1;
+        panel.add(usernameField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(passwordText, gbc);
+        gbc.gridx = 1;
+        panel.add(passwordField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        panel.add(saveClient, gbc);
+
+        JButton clear = new JButton("Clear");
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        //gbc.gridwidth = 2;
+        panel.add(clear, gbc);
+
+        saveClient.addActionListener(A -> checkInteger(usernameField.getText()));
+        //TODO: call method that receives the info from this panel to construct new client
+        return panel;
+    }
+
+    //TODO: Needs to check for integer age, clear all fields upon being called, and make button disabled.
+    public void addChildFromMenu(String name, String age, String note) {
+        checkInteger(age);
+        if(checkInteger(age)) {
+            int intAge = Integer.parseInt(age);
+            managementSystemReference.addClientToList(new Client(name,intAge,note));
+        }
+
+    }
+
+    public boolean checkInteger(String string) {
+        try {
+            int number = Integer.parseInt(string);
+        } catch (NumberFormatException exception) {
+            // Goes here correctly. Continue work.
+            exception.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public void initializeWindow() {
         JFrame.setDefaultLookAndFeelDecorated(true); // *chefs kiss*
         //JFrame frame = new JFrame("Layout");
         frame = new JFrame("Layout");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        JPanel panel = new JPanel();
 
         Container container = frame.getContentPane();
         container.add(startMenuPanel());
@@ -267,18 +338,7 @@ public class Menu {
         return panel;
     }
 
-    // First check if a txtfile named login exists, if not, ask for database login and if connection is good, save that info in a login.txt
-    public void checkLogin() {
-        if(readLoginFile("login")) { // method that reads file and checks if it exists
-            //TODO: Connect to DB, if gotConnection then...go to main menu
-            managementSystemReference.setupJDBC(username,password); // username and password may be wrong, how to deal?
-            // Maybe just go to login menu in case there is an error.
-        } else {
-            System.out.println("loginMenu");
-            loginMenu(loginMenuContainer());
-        }
 
-    }
     public void loginMenu(Container container) {
         frame = new JFrame("Login");
 
@@ -331,73 +391,43 @@ public class Menu {
         this.managementSystemReference = managementSystemReference;
     }
 
-    // Dialogues are added on top of a frame, given in the JDialog constructor.
-    // That means we need another method to setup the "main" frame of menu choices.
-    public void dialogTest() {
+    // First check if a txtfile named login exists, if not, ask for database login and if connection is good, save that info in a login.txt
+    public void isCorrectLogin() {
         if(readLoginFile("login")) { // method that reads file and checks if it exists
             //TODO: Connect to DB, if gotConnection then...go to main menu
+            while(!managementSystemReference.getHasConnection()) {
+
+            }
             managementSystemReference.setupJDBC(username,password); // username and password may be wrong, how to deal?
             // Maybe just go to login menu in case there is an error.
         } else {
-            JDialog dialog = new JDialog(frame,"Example",true);
-            dialog.setLayout(new GridBagLayout());
-            //frame = new JFrame("Login"); // Don't need this one, it will only make another "empty" window
-            // top ignore
-            JPanel panel = new JPanel();
-            GridBagLayout layout = new GridBagLayout(); //
-            panel.setLayout(layout);
-            // bot ignore
-            GridBagConstraints gbc = new GridBagConstraints();
-
-            //########## GRIDBAGCONSTRAINTS SETTINGS ################
-            gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
-            int paddingSize = 3;
-            gbc.insets = new Insets(paddingSize,paddingSize,paddingSize,paddingSize); // Padding
-            //#######################################################
-
-            JLabel usernameText = new JLabel("USERNAME: ");
-            JLabel passwordText = new JLabel("PASSWORD: ");
-            JTextField usernameField = new JTextField("USERNAME");
-            JTextField passwordField = new JTextField("PASSWORD");
-            JButton login = new JButton("Login");
-
-            gbc.gridx = 0; // x position, goes left to right
-            gbc.gridy = 0; // y position, goes top to bottom
-            dialog.add(usernameText, gbc);
-            gbc.gridx = 1;
-            dialog.add(usernameField, gbc);
-
-            gbc.gridx = 0;
-            gbc.gridy = 1;
-            dialog.add(passwordText, gbc);
-            gbc.gridx = 1;
-            dialog.add(passwordField, gbc);
-
-            gbc.gridx = 0;
-            gbc.gridy = 2;
-            gbc.gridwidth = 2;
-            dialog.add(login, gbc);
-
-            JButton clear = new JButton("Clear");
-            gbc.gridx = 0;
-            gbc.gridy = 3;
-            gbc.gridwidth = 2;
-            dialog.add(clear, gbc);
-
-            login.addActionListener(A -> setLoginCredentials(usernameField.getText(),passwordField.getText()));
-            //clear.addActionListener(A -> clearFrame(frame)); // Remove this function from this dialog
-            //Container container = frame.getContentPane();
-            //container.add(panel);
-            /*
-            frame.pack();
-            frame.setVisible(true);
-            frame.setBounds(100,100,600,200); // figure out a standard window size
-
-             */
-            dialog.setSize(300,300); //TODO: Change start position on screen.
-            dialog.setBounds((screenWidth-300)/2,(screenHeight-300)/2,300,300);
-            dialog.setVisible(true); //TODO: This one needs info, so the background (frame) is actually unnecessary.
+            System.out.println("loginMenu");
+            loginMenu(loginMenuContainer());
         }
+
+    }
+    // Dialogues are added on top of a frame, given in the JDialog constructor.
+    // That means we need another method to setup the "main" frame of menu choices.
+    public void dialogTest() {
+        // While there is no connection
+        // Check file for credentials and if there is still no connection then we try to type in new credentials
+        if(readLoginFile("login")) {
+            managementSystemReference.setupJDBC(username,password);
+        } else {
+            loginDialogue();
+        }
+        if(!managementSystemReference.getHasConnection()) {
+            loginDialogue();
+        }
+        /*
+        while(!managementSystemReference.getHasConnection()) {
+            readLoginFile("login");
+            managementSystemReference.setupJDBC(username,password);
+            if(!managementSystemReference.getHasConnection()) { //TODO: Right now it continues even when the window is closed.
+                loginDialogue();
+            }
+        }
+         */
     }
     public Container loginMenuContainer() {
         JPanel panel = new JPanel();
@@ -446,5 +476,67 @@ public class Menu {
         return container;
     }
 
+    public void loginDialogue() {
+        JDialog dialog = new JDialog(frame,"Example",true);
+        //frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        //dialog.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        dialog.setLayout(new GridBagLayout());
+        //frame = new JFrame("Login"); // Don't need this one, it will only make another "empty" window
+        // top ignore
+        JPanel panel = new JPanel();
+        GridBagLayout layout = new GridBagLayout(); //
+        panel.setLayout(layout);
+        // bot ignore
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        //########## GRIDBAGCONSTRAINTS SETTINGS ################
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
+        int paddingSize = 3;
+        gbc.insets = new Insets(paddingSize,paddingSize,paddingSize,paddingSize); // Padding
+        //#######################################################
+
+        JLabel usernameText = new JLabel("USERNAME: ");
+        JLabel passwordText = new JLabel("PASSWORD: ");
+        JTextField usernameField = new JTextField("USERNAME");
+        JTextField passwordField = new JTextField("PASSWORD");
+        JButton login = new JButton("Login");
+
+        gbc.gridx = 0; // x position, goes left to right
+        gbc.gridy = 0; // y position, goes top to bottom
+        dialog.add(usernameText, gbc);
+        gbc.gridx = 1;
+        dialog.add(usernameField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        dialog.add(passwordText, gbc);
+        gbc.gridx = 1;
+        dialog.add(passwordField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        dialog.add(login, gbc);
+
+        JButton clear = new JButton("Clear");
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
+        dialog.add(clear, gbc);
+
+        login.addActionListener(A -> setLoginCredentials(usernameField.getText(),passwordField.getText()));
+        //clear.addActionListener(A -> clearFrame(frame)); // Remove this function from this dialog
+        //Container container = frame.getContentPane();
+        //container.add(panel);
+            /*
+            frame.pack();
+            frame.setVisible(true);
+            frame.setBounds(100,100,600,200); // figure out a standard window size
+
+             */
+        dialog.setSize(300,300); //TODO: Change start position on screen.
+        dialog.setBounds((screenWidth-300)/2,(screenHeight-300)/2,300,300);
+        dialog.setVisible(true); //TODO: This one needs info, so the background (frame) is actually unnecessary.
+    }
 
 }

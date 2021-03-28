@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 public class JDBCReader {
 
-    JDBCWriter writerReference = new JDBCWriter();
+    ManagementSystem managementSystemReference;
     Connection connection; //TODO: Write this better, don't need to instantiate new writer.
 
     public void setConnection(Connection connection) {

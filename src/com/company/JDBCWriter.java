@@ -5,8 +5,12 @@ import java.util.Date;
 
 public class JDBCWriter {
 
+    ManagementSystem managementSystemReference;
     Connection connection;
 
+    public JDBCWriter (ManagementSystem managementSystemReference) {
+        this.managementSystemReference = managementSystemReference;
+    }
     public void setConnection(String username, String password) {
         System.out.println(username + " " + password);
 
@@ -28,9 +32,11 @@ public class JDBCWriter {
                     "client_fk FOREIGN KEY (appointment_client) REFERENCES Clients(client_id)" +
                     ");";
             statement.executeUpdate(createDatabase);
+            managementSystemReference.setHasConnection(true);
 
         } catch (SQLException ioerr) {
             System.out.println("Not connected : " + ioerr.getMessage());
+            managementSystemReference.setHasConnection(false);
         }
         this.connection = connection;
     }

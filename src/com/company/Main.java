@@ -10,7 +10,7 @@ public class Main {
         ManagementSystem managementSystem = new ManagementSystem();
         Menu menu = new Menu(managementSystem);
         //menu.mainMenu();
-        menu.startMenu();
+        menu.initializeWindow();
         //menu.loginMenu();
         menu.dialogTest();
 
