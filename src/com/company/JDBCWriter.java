@@ -1,6 +1,7 @@
 package com.company;
 
 import java.sql.*;
+import java.util.Calendar;
 import java.util.Date;
 
 public class JDBCWriter {
@@ -40,9 +41,9 @@ public class JDBCWriter {
                     "client_note VARCHAR(300)" + //TODO: Make sure note string can't be longer than 300 chars
                     ");";
             String tableAppointmentSQL = "CREATE TABLE IF NOT EXISTS ManagementSystem.tblAppointments(" +
-                    "appointment_date DATE NOT NULL, " +
+                    "appointment_date DATETIME NOT NULL," +
                     "appointment_client INT NOT NULL, " +
-                    "client_fk FOREIGN KEY (appointment_client) REFERENCES Clients(client_id)" +
+                    "CONSTRAINT client_fk FOREIGN KEY (appointment_client) REFERENCES tblClients(client_id)" +
                     ");";
             statement.executeUpdate(createDatabaseSQL);
             statement.executeUpdate(tableClientSQL);
@@ -88,15 +89,17 @@ public class JDBCWriter {
         }
     }
 
-    public void saveAppointmentToDabase(Appointment appointment) {
-        Date date = appointment.getCalendarDate();
-        String dateString = date.toString();
+    public void saveAppointmentToDatabase(Appointment appointment) {
+        //Calendar date = appointment.getCalendarDate();
+        int[] dateTime = appointment.getCalendarDateAsArray(); // {day,month,year,hour)
+
+        String dateString = String.format("%d-%d-%d %d",dateTime[2],dateTime[1],dateTime[0], dateTime[3]); // year, month, day, hour
         Client client = appointment.getClient();
         int clientId = client.getId();
 
         // SQL Statement clientSQL adds a new appointment's details into the database when executed.
         String appointmentSQL = "INSERT INTO ManagementSystem.tblAppointments VALUES (" +
-                "'" + dateString + "'," + client + ");";
+                "'" + dateString + "'," + clientId + ");";
 
         try{
             Statement statement = connection.createStatement();
@@ -109,9 +112,12 @@ public class JDBCWriter {
 
     public void deleteClientFromDatabase(Client client) {
         int clientId = client.getId();
+        String deleteClientAppointments = "DELETE FROM ManagementSystem.tblAppointments WHERE appointment_client = " +
+                "" + clientId + ";";
         String deleteClientSQL = "DELETE FROM ManagementSystem.tblClients WHERE client_id = " + clientId + ";";
         try {
             Statement statement = connection.createStatement();
+            statement.executeUpdate(deleteClientAppointments);
             statement.executeUpdate(deleteClientSQL);
         }  catch (SQLException exception) {
             exception.printStackTrace();
@@ -119,8 +125,8 @@ public class JDBCWriter {
     }
 
     public void deleteAppointmentFromDatabase(Appointment appointment) {
-        Date date = appointment.getCalendarDate();
-        String dateString = date.toString();
+        int[] dateTime = appointment.getCalendarDateAsArray(); // {day,month,year,hour)
+        String dateString = String.format("%d-%d-%d %d",dateTime[2],dateTime[1],dateTime[0], dateTime[3]); //TODO: Add specific hour?
         Client client = appointment.getClient();
         int clientId = client.getId();
 
@@ -132,6 +138,21 @@ public class JDBCWriter {
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
+    }
 
+    public void updateClient(Client client) {
+        int id = client.getId();
+        String note = client.getNote();
+
+        String updateClientSQL = "UPDATE ManagementSystem.tblClients " +
+                "SET client_note = '" + note + "' " +
+                "WHERE client_id = " + id + ";";
+        try {
+            Statement statement = connection.createStatement();
+            statement.executeUpdate(updateClientSQL);
+
+        } catch (SQLException exception) {
+            exception.printStackTrace();
+        }
     }
 }

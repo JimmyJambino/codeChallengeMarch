@@ -47,4 +47,8 @@ public class Client implements TableInformation{
         this.id = id;
     }
 
+    public void setNote(String note) {
+        this.note = note;
+    }
+
 }

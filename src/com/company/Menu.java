@@ -3,13 +3,11 @@ package com.company;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.*;
 
 public class Menu {
     ManagementSystem managementSystemReference;
@@ -46,7 +44,6 @@ public class Menu {
 
         Object[][] data = new Object[list.size()][columnCount]; // [rowCount][columnCount]
 
-
         for(int i = 0; i < list.size(); i++) { // For each object
             for(int j = 0; j < columnCount; j++) { // For each column
                 data[i][j] = list.get(i).getColumnInfo()[j];
@@ -61,89 +58,155 @@ public class Menu {
         return table;
     }
 
-    public void mainMenu() {
-        Client client = new Client("Jimmy", 29, "This is a test note, but what happens when the line is super long? \nOr contains line breaks?");
+    public JPanel manageAppointmentPanel() {
+        ArrayList appointmentList = managementSystemReference.getAppointmentList();
+        ArrayList<Appointment> preSortedList = (ArrayList<Appointment>) appointmentList;
+        AppointmentDateComparator comparator = new AppointmentDateComparator();
+        Collections.sort(preSortedList, comparator);
+        ArrayList sortedAppointmentList = (ArrayList) preSortedList;
+        JTable appointmentTable = tableConstructor(appointmentList);
+        JScrollPane scrollPane = new JScrollPane(appointmentTable);
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        frame.setTitle("Client Management Menu");
 
-        String[] columnNames = {
-                "First Name",
-                "Age",
-                "Notes",
-                "Delete-On-Update"
-        };
-        Object[][] data = {
-                {"string name","int age","string note",true},
-                {"Jungne",26,"Yohoho he be a pirate",true}
-        };
+        // GBC Setup
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
+        int paddingSize = 1;
+        int paddingWidth = 30; // TODO: Should be based on box size
+        gbc.insets = new Insets(paddingSize,paddingWidth,paddingSize,paddingWidth); // Padding
+        gbc.weightx = 1; // Fills out the entire empty space on x-axis
 
-        String[] columnNamesCalendar = {
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday"
-        }; //TODO: each day has 8 rows with information about the "hour" as each session is 1 hour long and a workday is 9 - 17
-        JTable calendarTable = new JTable();
+        // Panel setup
+        gbc.gridy = 0;
+        panel.add(scrollPane,gbc);
 
-        JTable table = new JTable(data,columnNames){
-            public boolean editCellAt(int row, int column, java.util.EventObject e) {
-                return false;
-            }
-        }; //TODO: WOOOOOO!
-        table.setSelectionMode(0); // Single, perhaps just use .setRowSelection(true)?
-        //table.getSelectedRows(); // returns an array of row indexes
+        gbc.gridx = 0; // x position, goes left to right
+        gbc.gridy = 1; // y position, goes top to bottom
+        JButton button1 = new JButton("Print index");
+        button1.addActionListener(A -> ManagementSystem.printSelectedRowIndex(appointmentTable));
+        // Enable button with checkRowSelection?
+        panel.add(button1, gbc);
 
-        Menu menu = new Menu(new ManagementSystem()); //TODO: Check this again
-        ArrayList<TableInformation> clientList = new ArrayList<>();
-        for(int i = 0; i < 50; i++) {
-            clientList.add(new Client("listTest",i,"notedddd"));
-        }
-        //clientList.add(new Client("listTest",1991,"notedddd"));
-        JTable testTable = menu.tableConstructor(clientList);
+        gbc.gridy = 2;
+        JButton button2 = new JButton("Add New Appointment");
+        button2.addActionListener(A -> changePanel(addAppointmentPanel())); //TODO: Make new panel for appointments
+        panel.add(button2, gbc);
 
-        JScrollPane scrollPane = new JScrollPane(testTable);
-        //table.setEnabled(false); // !!! This works! But doesn't allow the user to copy text to other programs (like an email)
-        //Maybe this will be fine for this project tho, but this will only display information, how do I make it
-        //easier for them to choose a client to update? Or to make an appointment?
-        //table.setCellSelectionEnabled(true);
+        gbc.gridy = 3;
+        JButton button3 = new JButton("Delete Selected Appointment");
+        button3.addActionListener(A -> removeAppointment(sortedAppointmentList, appointmentTable));
+        panel.add(button3, gbc);
 
-        //###########
-        JPanel panel = new JPanel(new BorderLayout()); // Do I need more panels?
-        //JFrame frame = new JFrame("Window Title");
-        frame = new JFrame("Window Title");
+        gbc.gridy = 4;
+        JButton button4 = new JButton("Previous Menu");
+        button4.addActionListener(A -> changePanel(startMenuPanel()));
+        panel.add(button4, gbc);
+        return panel;
+    }
 
 
-        JButton button = new JButton("Print index selection");
-        JButton button2 = new JButton("aaa");
-        JButton button3 = new JButton("ooo");
-        panel.add(button,BorderLayout.NORTH);
-        panel.add(button2,BorderLayout.SOUTH);
-        panel.add(button3,BorderLayout.CENTER);
-        button.addActionListener(a -> Main.printSelectedRowIndex(testTable));
+    // Show all clients and select one from there as the basis for client_id
+    // Then ask for date for appointment and save, perfect! TODO: Rethink this
+    // Show calendar first
+    public JPanel addAppointmentPanel() {
+        JPanel panel = new JPanel();
+        GridBagLayout layout = new GridBagLayout(); //
+        panel.setLayout(layout);
+        ArrayList clientList = managementSystemReference.getClientList();
+        JTable clientTable = tableConstructor(clientList);
+        JScrollPane scrollPane = new JScrollPane(clientTable);
+        // bot ignore
+        GridBagConstraints gbc = new GridBagConstraints();
 
-        Container container = frame.getContentPane();
-        container.setLayout(new BorderLayout(10,10));
-        container.add(panel);
-        container.add(scrollPane, BorderLayout.WEST); // Doesn't work hmm
-        //################
+        //########## GRIDBAGCONSTRAINTS SETTINGS ################
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
+        int paddingSize = 3;
+        gbc.insets = new Insets(paddingSize,paddingSize,paddingSize,paddingSize); // Padding
+        //#######################################################
 
-        frame.pack();
+        JLabel dayText = new JLabel("Day (DD): ");
+        JLabel monthText = new JLabel("Month (MM): ");
+        JLabel yearText = new JLabel("Year (YYYY): ");
+        JLabel timeText = new JLabel("Hour (09-16): ");
+        JTextField dayField = new JTextField("");
+        JTextField monthField = new JTextField("");
+        JTextField yearField = new JTextField("");
+        JTextField timeField = new JTextField("");
 
-        frame.setBounds((screenWidth-width)/2,(screenHeight-height)/2,width,height); // x and y are pixel location on startup
-        frame.setVisible(true);
-        System.out.print(screenWidth + " " + screenHeight);
-        //frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); yoo this might be  really good+
+        gbc.gridwidth = 2;
+        gbc.gridx = 0; // x position, goes left to right
+        gbc.gridy = 0;// y position, goes top to bottom
+        panel.add(scrollPane, gbc);
 
+        gbc.gridwidth = 1;
+        gbc.gridy = 1;
+        panel.add(dayText, gbc);
+        gbc.gridx = 1;
+        panel.add(dayField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        panel.add(monthText, gbc);
+        gbc.gridx = 1;
+        panel.add(monthField, gbc);
+
+        gbc.gridy = 3;
+        gbc.gridx = 0;
+        panel.add(yearText, gbc);
+        gbc.gridx = 1;
+        panel.add(yearField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        panel.add(timeText, gbc);
+        gbc.gridx = 1;
+        panel.add(timeField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.gridwidth = 2;
+        JButton saveAppointment = new JButton("Save Appointment");
+        panel.add(saveAppointment, gbc);
+
+        JButton button3 = new JButton("Previous Menu");
+        button3.addActionListener(A -> changePanel(manageAppointmentPanel()));
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        //gbc.gridwidth = 2;
+        panel.add(button3, gbc);
+
+        saveAppointment.addActionListener(A -> addAppointmentByFields(clientTable, dayField, monthField, yearField,timeField));
+        //TODO: call method that receives the info from this panel to construct new client
+        return panel;
+    }
+    public void removeAppointment(ArrayList<TableInformation> list, JTable table) {
+        Appointment appointment = (Appointment)list.get(getTableIndex(table));
+        list.remove(appointment);
+        managementSystemReference.writer.deleteAppointmentFromDatabase(appointment);
+        changePanel(manageAppointmentPanel());
+    }
+
+
+    public void addAppointmentByFields(
+            JTable table, JTextField dayField, JTextField monthField, JTextField yearField, JTextField timeField) {
+        Client client = managementSystemReference.getClientFromTable(table);
+        int day = Integer.parseInt(dayField.getText());
+        int month = Integer.parseInt(monthField.getText());
+        int year = Integer.parseInt(yearField.getText());
+        int time = Integer.parseInt(timeField.getText());
+
+        Calendar calendar = new GregorianCalendar(year,month,day,time,0);
+        Appointment appointment = new Appointment(client, calendar);
+        managementSystemReference.addAppointmentToList(appointment);
+        managementSystemReference.writer.saveAppointmentToDatabase(appointment);
     }
 
     // Shows all current clients and allows the user to add or delete clients, as well as search for specific parameters.
     public JPanel manageClientPanel() {
         // Window Setup
         ArrayList clientList = managementSystemReference.getClientList();
-        for(int i = 0; i < 5; i++) {
-            clientList.add(new Client("listTest",i,"notedddd"));
-        }
+
         JTable clientTable = tableConstructor(clientList);
         JScrollPane scrollPane = new JScrollPane(clientTable);
         JPanel panel = new JPanel(new GridBagLayout());
@@ -163,19 +226,200 @@ public class Menu {
 
         gbc.gridx = 0; // x position, goes left to right
         gbc.gridy = 1; // y position, goes top to bottom
-        JButton button1 = new JButton("Print index");
-        button1.addActionListener(A -> ManagementSystem.printSelectedRowIndex(clientTable));
+        JButton button1 = new JButton("Update Client Info");
+        button1.addActionListener(A -> changePanel(editClientPanel(clientTable)));
         // Enable button with checkRowSelection?
-        panel.add(button1,gbc);
+        panel.add(button1, gbc);
 
         gbc.gridy = 2;
         JButton button2 = new JButton("Add new Client");
         button2.addActionListener(A -> changePanel(addClientPanel()));
-        panel.add(button2,gbc);
+        panel.add(button2, gbc);
 
+        gbc.gridy = 3;
+        JButton button3 = new JButton("Delete Selected Client");
+        button3.addActionListener(B -> removeClient(clientList,clientTable));
+        panel.add(button3, gbc);
+
+        gbc.gridy = 4;
+        JButton button4 = new JButton("Previous Menu");
+        button4.addActionListener(C -> changePanel(startMenuPanel()));
+        panel.add(button4, gbc);
+
+        gbc.gridy = 5;
+        JButton button5 = new JButton("Search Dialog");
+        button5.addActionListener(A -> searchDialog(clientList));
+        panel.add(button5, gbc);
+        return panel;
+    }
+
+    public JPanel manageClientSearchedPanel(ArrayList<TableInformation> updatedList) {
+        // Window Setup
+        ArrayList clientList = managementSystemReference.getClientList();
+
+        JTable clientTable = tableConstructor(updatedList);
+        JScrollPane scrollPane = new JScrollPane(clientTable);
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        frame.setTitle("Client Management Menu");
+
+        // GBC Setup
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
+        int paddingSize = 1;
+        int paddingWidth = 30; // TODO: Should be based on box size
+        gbc.insets = new Insets(paddingSize,paddingWidth,paddingSize,paddingWidth); // Padding
+        gbc.weightx = 1; // Fills out the entire empty space on x-axis
+
+        // Panel setup
+        gbc.gridy = 0;
+        panel.add(scrollPane,gbc);
+
+        gbc.gridx = 0; // x position, goes left to right
+        gbc.gridy = 1; // y position, goes top to bottom
+        JButton button1 = new JButton("Update Client Info");
+        button1.addActionListener(A -> changePanel(editClientPanel(clientTable)));
+        // Enable button with checkRowSelection?
+        panel.add(button1, gbc);
+
+        gbc.gridy = 2;
+        JButton button2 = new JButton("Add new Client");
+        button2.addActionListener(A -> changePanel(addClientPanel()));
+        panel.add(button2, gbc);
+
+        gbc.gridy = 3;
+        JButton button3 = new JButton("Delete Selected Client");
+        button3.addActionListener(B -> removeClient(clientList,clientTable));
+        panel.add(button3, gbc);
+
+        gbc.gridy = 4;
+        JButton button4 = new JButton("Previous Menu");
+        button4.addActionListener(C -> changePanel(startMenuPanel()));
+        panel.add(button4, gbc);
+
+        gbc.gridy = 5;
+        JButton button5 = new JButton("Search Dialog");
+        button5.addActionListener(A -> searchDialog(clientList));
+        panel.add(button5, gbc);
+        return panel;
+    }
+
+    public JPanel editClientPanel(JTable table) {
+        JPanel panel = new JPanel();
+        GridBagLayout layout = new GridBagLayout(); //
+        panel.setLayout(layout);
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        //########## GRIDBAGCONSTRAINTS SETTINGS ################
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
+        int paddingSize = 3;
+        gbc.insets = new Insets(paddingSize,paddingSize,paddingSize,paddingSize); // Padding
+        //#######################################################
+
+        Client client = (Client)managementSystemReference.getClientList().get(getTableIndex(table));
+        String clientName = client.getName();
+        String clientNote = client.getNote();
+
+        gbc.gridx = 0; // x position, goes left to right
+        gbc.gridy = 0; // y position, goes top to bottom
+
+        JLabel nameText = new JLabel("Client : " + clientName);
+        panel.add(nameText, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel noteText = new JLabel("Note: ");
+        panel.add(noteText, gbc); //TODO: Make this bigger?
+
+        gbc.gridx = 1;
+        JTextField noteField = new JTextField(clientNote,50); // Can only make it wider...
+        panel.add(noteField, gbc);
+
+        gbc.gridwidth = 2;
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        JButton button1 = new JButton("Update Client");
+        button1.addActionListener(A -> updateClient(client, noteField));
+        panel.add(button1, gbc);
+
+        gbc.gridy = 3;
+        JButton button2 = new JButton("Previous Menu");
+        button2.addActionListener(A -> changePanel(manageClientPanel()));
+        panel.add(button2, gbc);
 
         return panel;
+    }
 
+    public void updateClient(Client client, JTextField noteField) {
+        client.setNote(noteField.getText());
+        managementSystemReference.writer.updateClient(client);
+    }
+
+    //TODO: Split this into 2 methods.
+    public void removeClient(ArrayList<TableInformation> list, JTable table) {
+        Client client = (Client)list.get(getTableIndex(table));
+        list.remove(client);
+        managementSystemReference.writer.deleteClientFromDatabase(client);
+        ArrayList<TableInformation> aList = managementSystemReference.getAppointmentList();
+        for(int i = 0; i < aList.size(); i++) {
+            Appointment appointment = (Appointment)aList.get(i);
+            if(appointment.getClient().getId() == client.getId()) {
+                aList.remove(appointment);
+            }
+        }
+        changePanel(manageClientPanel());
+    }
+
+    public void confirmDeleteClient(Client client) {
+        //TODO: make this later if you have time
+    }
+
+    // Ask for dialog?
+    public void getClientsByNote(ArrayList<TableInformation> list, String search) {
+        ArrayList<TableInformation> noteClientList = new ArrayList<>(); // Needs to be another TableInformation list as we need it for the table construction.
+        for(int i = 0; i < list.size(); i++) {
+            Client client = (Client)list.get(i);
+            if(client.getNote().contains(search)) {
+                noteClientList.add(client);
+            }
+        }
+        changePanel(manageClientSearchedPanel(noteClientList));
+    }
+
+    public void searchDialog(ArrayList<TableInformation> list) {
+        JDialog dialog = new JDialog(frame,"Search notes for Keywords",true);
+        dialog.setLayout(new GridBagLayout());
+        JPanel panel = new JPanel();
+        GridBagLayout layout = new GridBagLayout(); //
+        panel.setLayout(layout);
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        //########## GRIDBAGCONSTRAINTS SETTINGS ################
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
+        int paddingSize = 3;
+        gbc.insets = new Insets(paddingSize,paddingSize,paddingSize,paddingSize); // Padding
+        //#######################################################
+
+        JLabel searchLabel = new JLabel("Search: ");
+        JTextField searchField = new JTextField("");
+        JButton search = new JButton("Start Search");
+
+        gbc.gridx = 0; // x position, goes left to right
+        gbc.gridy = 0; // y position, goes top to bottom
+        dialog.add(searchLabel, gbc);
+        gbc.gridx = 1;
+        dialog.add(searchField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        dialog.add(search, gbc);
+
+        search.addActionListener(A -> getClientsByNote(list, searchField.getText()));
+
+        dialog.setSize(300,300); //TODO: Change start position on screen.
+        dialog.setBounds((screenWidth-300)/2,(screenHeight-300)/2,300,300);
+        dialog.setVisible(true); //TODO: This one needs info, so the background (frame) is actually unnecessary.
     }
 
     public JPanel addClientPanel() {
@@ -191,59 +435,93 @@ public class Menu {
         gbc.insets = new Insets(paddingSize,paddingSize,paddingSize,paddingSize); // Padding
         //#######################################################
 
-        JLabel usernameText = new JLabel("Name: ");
-        JLabel passwordText = new JLabel("Age: ");
-        JTextField usernameField = new JTextField("");
-        JTextField passwordField = new JTextField("AGE");
+        JLabel nameText = new JLabel("Name: ");
+        JLabel ageText = new JLabel("Age: ");
+        JLabel noteText = new JLabel("Note: "); //TODO: Add this?
+        JTextField nameField = new JTextField("");
+        JTextField ageField = new JTextField("");
+        JTextField noteField = new JTextField(""); // TODO: Make it bigger
         JButton saveClient = new JButton("Save Client");
 
         gbc.gridx = 0; // x position, goes left to right
         gbc.gridy = 0; // y position, goes top to bottom
-        panel.add(usernameText, gbc);
+        panel.add(nameText, gbc);
         gbc.gridx = 1;
-        panel.add(usernameField, gbc);
+        panel.add(nameField, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
-        panel.add(passwordText, gbc);
+        panel.add(ageText, gbc);
         gbc.gridx = 1;
-        panel.add(passwordField, gbc);
+        panel.add(ageField, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 2;
         panel.add(saveClient, gbc);
 
-        JButton clear = new JButton("Clear");
+        JButton button3 = new JButton("Previous Menu");
+        button3.addActionListener(A -> changePanel(manageClientPanel()));
         gbc.gridx = 0;
         gbc.gridy = 3;
         //gbc.gridwidth = 2;
-        panel.add(clear, gbc);
+        panel.add(button3, gbc);
 
-        saveClient.addActionListener(A -> checkInteger(usernameField.getText()));
+        saveClient.addActionListener(A -> addChildByFields(nameField.getText(),ageField.getText(),noteField.getText(),nameField,ageField));
         //TODO: call method that receives the info from this panel to construct new client
         return panel;
     }
 
     //TODO: Needs to check for integer age, clear all fields upon being called, and make button disabled.
-    public void addChildFromMenu(String name, String age, String note) {
-        checkInteger(age);
-        if(checkInteger(age)) {
+    public void addChildByFields(String name, String age, String note, JTextField nameField, JTextField ageField) {
+        //checkInteger(age);
+        if(checkInteger(age) && checkStringValue(name)) {
             int intAge = Integer.parseInt(age);
-            managementSystemReference.addClientToList(new Client(name,intAge,note));
+            Client client = new Client(name,intAge,note);
+            managementSystemReference.addClientToList(client);
+            managementSystemReference.writer.saveClientToDatabase(client);
+            nameField.setText("");
+            ageField.setText("");
+        } else {
+            System.out.println("Wrong input. Try again.");
         }
-
     }
 
     public boolean checkInteger(String string) {
         try {
             int number = Integer.parseInt(string);
+            if(number == 0) {
+                return false;
+            }
         } catch (NumberFormatException exception) {
             // Goes here correctly. Continue work.
             exception.printStackTrace();
             return false;
         }
         return true;
+    }
+
+    public boolean checkStringValue(String name) {
+        if(name.length() == 0) {
+            return false;
+        }
+        String nameCapital = name.toUpperCase();
+
+        // Contains vowels
+        boolean nameA = nameCapital.contains("A");
+        boolean nameE = nameCapital.contains("E");
+        boolean nameY = nameCapital.contains("Y");
+        boolean nameU = nameCapital.contains("U");
+        boolean nameI = nameCapital.contains("I");
+        boolean nameO = nameCapital.contains("O");
+        boolean nameÆ = nameCapital.contains("Æ");
+        boolean nameØ = nameCapital.contains("Ø");
+        boolean nameÅ = nameCapital.contains("Å");
+        if(nameA || nameE || nameY || nameU || nameI || nameO || nameÆ || nameØ || nameÅ) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public void initializeWindow() {
@@ -270,7 +548,6 @@ public class Menu {
     }
 
     public JPanel startMenuPanel() {
-        System.out.println("New Panel");
         JPanel panel = new JPanel();
         GridBagLayout layout = new GridBagLayout(); //
         panel.setLayout(layout);
@@ -281,18 +558,18 @@ public class Menu {
         int paddingSize = 1;
         int paddingWidth = 30; // TODO: Should be based on box size
         gbc.insets = new Insets(paddingSize,paddingWidth,paddingSize,paddingWidth); // Padding
+
         gbc.gridx = 0; // x position, goes left to right
         gbc.gridy = 0; // y position, goes top to bottom
         gbc.weightx = 1; // Fills out the entire empty space on x-axis
         JButton button1 = new JButton("Manage Clients");
-        button1.addActionListener(A -> changePanel(startMenuPanel()));
-
+        button1.addActionListener(A -> changePanel(manageClientPanel()));
         panel.add(button1, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
         JButton button2 = new JButton("Manage Appointments");
-        button2.addActionListener(A -> changePanel(manageClientPanel()));
+        button2.addActionListener(A -> changePanel(manageAppointmentPanel()));
         panel.add(button2, gbc);
 
         gbc.gridx = 0;
@@ -328,13 +605,18 @@ public class Menu {
 
         gbc.gridy = 10;
         try {
-            BufferedImage image = ImageIO.read(new File("edit.png"));
-            JLabel labelPic = new JLabel(new ImageIcon(image.getScaledInstance(200,200, Image.SCALE_FAST)));
+            BufferedImage image = ImageIO.read(new File("therapymanagerPaintAlpha.png"));
+            JLabel labelPic = new JLabel(new ImageIcon(image.getScaledInstance(400,200, Image.SCALE_FAST)));
             //labelPic.setBounds(10,10,10,10);
             panel.add(labelPic,gbc);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        gbc.gridy = 11;
+        JLabel quoteOfTheDay = new JLabel(managementSystemReference.randomQuote());
+        panel.add(quoteOfTheDay, gbc);
+
         return panel;
     }
 
@@ -408,9 +690,11 @@ public class Menu {
     }
     // Dialogues are added on top of a frame, given in the JDialog constructor.
     // That means we need another method to setup the "main" frame of menu choices.
+    // Maybe no dialogues? And just have a login screen?
     public void dialogTest() {
         // While there is no connection
         // Check file for credentials and if there is still no connection then we try to type in new credentials
+        /*
         if(readLoginFile("login")) {
             managementSystemReference.setupJDBC(username,password);
         } else {
@@ -419,15 +703,16 @@ public class Menu {
         if(!managementSystemReference.getHasConnection()) {
             loginDialogue();
         }
-        /*
+
+         */
+
         while(!managementSystemReference.getHasConnection()) {
             readLoginFile("login");
             managementSystemReference.setupJDBC(username,password);
-            if(!managementSystemReference.getHasConnection()) { //TODO: Right now it continues even when the window is closed.
+            if(!managementSystemReference.getHasConnection()) { //TODO: Right now it continues even when the window is closed. This is fine, we can exit program with another button.
                 loginDialogue();
             }
         }
-         */
     }
     public Container loginMenuContainer() {
         JPanel panel = new JPanel();
@@ -464,13 +749,14 @@ public class Menu {
         gbc.gridwidth = 2;
         panel.add(login, gbc);
 
-        JButton clear = new JButton("Clear");
+        JButton exitProgram = new JButton("Exit Program");
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
-        panel.add(clear, gbc);
+        panel.add(exitProgram, gbc);
 
         login.addActionListener(A -> setLoginCredentials(usernameField.getText(),passwordField.getText()));
+        exitProgram.addActionListener(A -> System.exit(0));
         Container container = new Container();
         container.add(panel);
         return container;
@@ -518,14 +804,14 @@ public class Menu {
         gbc.gridwidth = 2;
         dialog.add(login, gbc);
 
-        JButton clear = new JButton("Clear");
+        JButton noSQL = new JButton("I don't have MySQL");
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
-        dialog.add(clear, gbc);
+        dialog.add(noSQL, gbc);
 
         login.addActionListener(A -> setLoginCredentials(usernameField.getText(),passwordField.getText()));
-        //clear.addActionListener(A -> clearFrame(frame)); // Remove this function from this dialog
+        noSQL.addActionListener(A -> System.out.println("Continue")); //TODO: Make this one close the dialogue window and setup demo of program.
         //Container container = frame.getContentPane();
         //container.add(panel);
             /*
@@ -537,6 +823,10 @@ public class Menu {
         dialog.setSize(300,300); //TODO: Change start position on screen.
         dialog.setBounds((screenWidth-300)/2,(screenHeight-300)/2,300,300);
         dialog.setVisible(true); //TODO: This one needs info, so the background (frame) is actually unnecessary.
+    }
+
+    public int getTableIndex(JTable table) {
+        return table.getSelectedRow();
     }
 
 }
