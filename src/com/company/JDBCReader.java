@@ -66,13 +66,21 @@ public class JDBCReader {
             while(resultSet.next()) {
                 Calendar calendar = new GregorianCalendar();
                 Timestamp date = resultSet.getTimestamp("appointment_date");
-                String dateString = resultSet.getString("appointment_date");
-                System.out.println(dateString);
+                //String dateString = resultSet.getString("appointment_date");
+                //System.out.println(dateString);
                 calendar.setTime(date);
+                int appointment_id = resultSet.getInt("appointment_id");
                 int client_id = resultSet.getInt("appointment_client");
-
+                boolean isAM = resultSet.getBoolean("appointment_isAM");
                 Client client = managementSystemReference.getClientById(client_id);
-                appointmentList.add(new Appointment(client,calendar));
+                Appointment appointment = new Appointment(client, calendar);
+                appointment.setIsAM(isAM);
+                if(!appointment.getIsAM()) {
+                    int[] dateArray = appointment.getCalendarDateAsArray();
+                    appointment.getCalendarDate().set(dateArray[2],dateArray[1],dateArray[0], dateArray[3]+12,0);
+                }
+                appointment.setId(appointment_id);
+                appointmentList.add(appointment);
             }
         } catch (SQLException exception) {
             exception.printStackTrace();

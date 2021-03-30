@@ -39,7 +39,9 @@ public class JDBCWriter {
                 "client_note VARCHAR(300)" +
                 ");";
         String tableAppointmentSQL = "CREATE TABLE IF NOT EXISTS ManagementSystem.tblAppointments(" +
+                "appointment_id INT NOT NULL UNIQUE PRIMARY KEY AUTO_INCREMENT," +
                 "appointment_date DATETIME NOT NULL," +
+                "appointment_isAM BOOLEAN NOT NULL," +
                 "appointment_client INT NOT NULL, " +
                 "CONSTRAINT client_fk FOREIGN KEY (appointment_client) REFERENCES tblClients(client_id)" +
                 ");";
@@ -102,24 +104,28 @@ public class JDBCWriter {
     public void saveAppointmentToDatabase(Appointment appointment) {
         //Calendar date = appointment.getCalendarDate();
         int[] dateTime = appointment.getCalendarDateAsArray(); // {day,month,year,hour)
-        String amPM;
-        if(dateTime[3] < 12) {
-            amPM = "AM";
-        } else {
-            amPM = "PM";
-        }
-        String dateString = String.format("%d-%d-%d %d + %s",dateTime[2],dateTime[1],dateTime[0], dateTime[3], amPM); // year, month, day, hour
+        boolean isAM = appointment.getIsAM();
+        int isPM = isAM ? 1 : 0;
+
+        String dateString = String.format("%d-%d-%d %d",dateTime[2],dateTime[1]+1,dateTime[0], dateTime[3]); // year, month, day, hour
 
         Client client = appointment.getClient();
         int clientId = client.getId();
 
         // SQL Statement clientSQL adds a new appointment's details into the database when executed.
-        String appointmentSQL = "INSERT INTO ManagementSystem.tblAppointments VALUES (" +
-                "'" + dateString + "'," + clientId + ");";
+        String appointmentSQL = "INSERT INTO ManagementSystem.tblAppointments VALUES (DEFAULT, " +
+                "'" + dateString + "'," + 1 + "," + clientId + ");";
+
+        // SQL Statement lastAddedSQL returns the last added appointments's id from the database when executed.
+        String lastAddedSQL = "SELECT appointment_id FROM ManagementSystem.tblAppointments ORDER BY appointment_id DESC LIMIT 1;";
 
         try{
             Statement statement = connection.createStatement();
             statement.executeUpdate(appointmentSQL);
+            ResultSet rs = statement.executeQuery(lastAddedSQL);
+            rs.next();
+            int appointmentId = rs.getInt("appointment_id");
+            appointment.setId(appointmentId);
 
         } catch (SQLException exception) {
             exception.printStackTrace();
@@ -150,15 +156,25 @@ public class JDBCWriter {
      */
     public void deleteAppointmentFromDatabase(Appointment appointment) {
         int[] dateTime = appointment.getCalendarDateAsArray(); // {day,month,year,hour)
-        String dateString = String.format("%d-%d-%d %d",dateTime[2],dateTime[1],dateTime[0], dateTime[3]);
+        String dateString;
+        if(appointment.getIsAM()) {
+            dateString = String.format("%d-%d-%d %d",dateTime[2],dateTime[1],dateTime[0], dateTime[3]);
+        } else {
+            dateString = String.format("%d-%d-%d %d",dateTime[2],dateTime[1],dateTime[0], dateTime[3]+12);
+        }
+
         Client client = appointment.getClient();
         int clientId = client.getId();
 
         String deleteAppointmentSQL = "DELETE FROM ManagementSystem.tblAppointments WHERE appointment_date = '" +
                 dateString + "' AND appointment_client = " + clientId + ";";
+        System.out.println("ID: " + appointment.getId());
+        System.out.println("CLIENT: " + clientId);
+        String delete = "DELETE FROM ManagementSystem.tblAppointments WHERE appointment_id = " + appointment.getId() +
+                " AND appointment_client = " + clientId + ";";
         try {
             Statement statement = connection.createStatement();
-            statement.executeUpdate(deleteAppointmentSQL);
+            statement.executeUpdate(delete);
         } catch (SQLException exception) {
             exception.printStackTrace();
         }

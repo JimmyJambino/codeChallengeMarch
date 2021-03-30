@@ -208,7 +208,7 @@ public class Menu {
             JTable table, JTextField dayField, JTextField monthField, JTextField yearField, JTextField timeField) {
         Client client = managementSystemReference.getClientFromTable(table);
         int day = Integer.parseInt(dayField.getText());
-        int month = Integer.parseInt(monthField.getText())-1; // Months are 0 indexed
+        int month = Integer.parseInt(monthField.getText())-1; // Months are 0 indexed in java, but not in SQL
         int year = Integer.parseInt(yearField.getText());
         int time = Integer.parseInt(timeField.getText());
 

@@ -1,20 +1,43 @@
 package com.company;
 
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 
 public class Appointment implements TableInformation{
     private Client client;
+    private int id;
     private Calendar myCalendar;
+    private boolean isAM; // AM or PM
     private int columnCount = 2;
     private String[] columnNames = {"Client","Date"};
 
     public Appointment(Client client, Calendar calendar) {
         this.client = client;
         this.myCalendar = calendar;
+        setIsAM();
+    }
+
+    public void setIsAM() {
+        if (myCalendar.get(Calendar.HOUR) >= 12) {
+            isAM = true;
+        } else {
+            isAM = false;
+        }
+    }
+
+    public void setIsAM(boolean isAM) {
+        this.isAM = isAM;
+    }
+    public boolean getIsAM() {
+        return isAM;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public int[] getCalendarDateAsArray() {
