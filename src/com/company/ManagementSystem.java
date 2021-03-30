@@ -1,15 +1,8 @@
 package com.company;
 
-import com.company.Tools.Input;
-
 import javax.swing.*;
-import java.sql.Connection;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Random;
-import java.util.Scanner;
 
 public class ManagementSystem {
 
@@ -26,6 +19,9 @@ public class ManagementSystem {
         setQuoteList();
     }
 
+    /**
+     * Adds all the String objects containing daily quotes to the system
+     */
     public void setQuoteList() {
         quoteList.add("Discipline is the bridge between goals and accomplishments.");
         quoteList.add("If you can't do great things, do small things in a great way.");
@@ -43,15 +39,23 @@ public class ManagementSystem {
         quoteList.add("When you have exhausted all possibilities, remember this - you haven't.");
     }
 
+    /**
+     * Chooses a random quote from the quoteList
+     * @return
+     */
     public String randomQuote() {
         Random random = new Random();
         int randomNumber = random.nextInt(quoteList.size()); // both ArrayList and Random are 0-indexed so this is fine.
-        System.out.println(randomNumber);
         return quoteList.get(randomNumber);
     }
 
+    /**
+     * Sets a connection to the MySQL server given a String username and String password.
+     * Reads data from the tables tblClients and tblAppointments after connecting.
+     * @param username
+     * @param password
+     */
     public void setupJDBC(String username, String password) {
-
         writer.setConnection(username, password);
         reader.setConnection(writer.getConnection());
         clientList = reader.readAllClients();
@@ -62,17 +66,13 @@ public class ManagementSystem {
 
         boolean ex = table.getSelectionModel().isSelectionEmpty();
         if(!ex){
-            int index = table.getSelectedRows()[0]; // 0 because it is 0 indexed and we always return the top selected row.
-            index = table.getSelectedRow(); // singular row, delete above?
+            int index = table.getSelectedRow(); //
             System.out.println(index);
         } else {
             System.out.println("nothing");
         }
     }
 
-    public int getTableIndex(JTable table) {
-        return table.getSelectedRow();
-    }
     public Client getClientFromTable(JTable table) {
         int index = table.getSelectedRow();
         return (Client)clientList.get(index);
@@ -85,7 +85,6 @@ public class ManagementSystem {
     public ArrayList<TableInformation> getClientList() {
         return clientList;
     }
-
 
     public void addClientToList(Client client) {
         clientList.add(client);
@@ -102,22 +101,13 @@ public class ManagementSystem {
         return hasConnection;
     }
 
-    public boolean appointmentDateAvailable(String date, String time) {
-        for(int i = 0; i < appointmentList.size(); i++) {
-            String dateString = appointmentList.get(i).getColumnInfo()[1]; // "YYYY-MM-DD HH"
-            Scanner scanner = new Scanner(dateString);
-            String day = scanner.next(); // "YYYY-MM-DD"
-            String clock = scanner.next(); // "HH"
-            if(date.equals(day) && time.equals(clock)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public void deleteClientFromList(int index) {
-        clientList.remove(index);
-    }
+    /**
+     * Loops through the clientList to find a Client with the given int id. Considering this is used in conjunction with
+     * the JDBCReader that has the id from the table tblClients in the database, this will never return null unless that
+     * id has been changed from within the database.
+     * @param id
+     * @return
+     */
     public Client getClientById(int id) {
         for(int i = 0; i < clientList.size(); i++) {
             Client client = (Client)clientList.get(i);

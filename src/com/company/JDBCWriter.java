@@ -9,42 +9,44 @@ public class JDBCWriter {
     ManagementSystem managementSystemReference;
     Connection connection;
 
+    /**
+     * Sets a reference for the ManagementSystem inside the JDBCWriter class
+     * @param managementSystemReference
+     */
     public JDBCWriter (ManagementSystem managementSystemReference) {
         this.managementSystemReference = managementSystemReference;
     }
+
+    /**
+     * Attempts to connect to a MySQL address given a String username and String password and
+     * if successful, creates a database named ManagementSystem if no database currently exists
+     * with that name at that MySQL address.
+     * Two tables will also be created, tblClients and tblAppointments that will store
+     * information for Client and Appointment objects.
+     * @param username
+     * @param password
+     */
     public void setConnection(String username, String password) {
         System.out.println(username + " " + password);
 
         //TODO: Change kindergarten to proper database, also have method to initialize database
-        final String url = String.format("jdbc:mysql://localhost?user=%s?serverTimezone=UTC",username);
+        final String JDBC = String.format("jdbc:mysql://localhost?user=%s?serverTimezone=UTC",username);
+        String createDatabaseSQL = "CREATE DATABASE IF NOT EXISTS ManagementSystem;";
+        String tableClientSQL = "CREATE TABLE IF NOT EXISTS ManagementSystem.tblClients(" +
+                "client_id INT NOT NULL UNIQUE PRIMARY KEY AUTO_INCREMENT, " +
+                "client_name VARCHAR(50) NOT NULL, " +
+                "client_age INT NOT NULL, " +
+                "client_note VARCHAR(300)" +
+                ");";
+        String tableAppointmentSQL = "CREATE TABLE IF NOT EXISTS ManagementSystem.tblAppointments(" +
+                "appointment_date DATETIME NOT NULL," +
+                "appointment_client INT NOT NULL, " +
+                "CONSTRAINT client_fk FOREIGN KEY (appointment_client) REFERENCES tblClients(client_id)" +
+                ");";
         try {
-            connection = DriverManager.getConnection(url, username, password);
+            connection = DriverManager.getConnection(JDBC, username, password);
             Statement statement = connection.createStatement();
-            String createDatabase = "CREATE DATABASE IF NOT EXISTS ManagementSystem;" +
-                    "CREATE TABLE IF NOT EXISTS ManagementSystem.tblClients(" +
-                    "client_id INT NOT NULL UNIQUE PRIMARY KEY AUTO_INCREMENT, " +
-                    "client_name VARCHAR(50) NOT NULL, " +
-                    "client_age INT NOT NULL, " +
-                    "client_note VARCHAR(300)" + //TODO: Make sure note string can't be longer than 300 chars
-                    ");" +
-                    "\nCREATE TABLE IF NOT EXISTS ManagementSystem.tblAppointments(" +
-                    "appointment_date DATE NOT NULL, " +
-                    "appointment_client INT NOT NULL, " +
-                    "client_fk FOREIGN KEY (appointment_client) REFERENCES Clients(client_id)" +
-                    ");";
 
-            String createDatabaseSQL = "CREATE DATABASE IF NOT EXISTS ManagementSystem;";
-            String tableClientSQL = "CREATE TABLE IF NOT EXISTS ManagementSystem.tblClients(" +
-                    "client_id INT NOT NULL UNIQUE PRIMARY KEY AUTO_INCREMENT, " +
-                    "client_name VARCHAR(50) NOT NULL, " +
-                    "client_age INT NOT NULL, " +
-                    "client_note VARCHAR(300)" + //TODO: Make sure note string can't be longer than 300 chars
-                    ");";
-            String tableAppointmentSQL = "CREATE TABLE IF NOT EXISTS ManagementSystem.tblAppointments(" +
-                    "appointment_date DATETIME NOT NULL," +
-                    "appointment_client INT NOT NULL, " +
-                    "CONSTRAINT client_fk FOREIGN KEY (appointment_client) REFERENCES tblClients(client_id)" +
-                    ");";
             statement.executeUpdate(createDatabaseSQL);
             statement.executeUpdate(tableClientSQL);
             statement.executeUpdate(tableAppointmentSQL);
@@ -61,6 +63,10 @@ public class JDBCWriter {
         return connection;
     }
 
+    /**
+     * Saves the given Client to the database
+     * @param client
+     */
     public void saveClientToDatabase(Client client) {
         String name = client.getName();
         int age = client.getAge();
@@ -89,11 +95,21 @@ public class JDBCWriter {
         }
     }
 
+    /**
+     * Saves the given Appointment to the database
+     * @param appointment
+     */
     public void saveAppointmentToDatabase(Appointment appointment) {
         //Calendar date = appointment.getCalendarDate();
         int[] dateTime = appointment.getCalendarDateAsArray(); // {day,month,year,hour)
+        String amPM;
+        if(dateTime[3] < 12) {
+            amPM = "AM";
+        } else {
+            amPM = "PM";
+        }
+        String dateString = String.format("%d-%d-%d %d + %s",dateTime[2],dateTime[1],dateTime[0], dateTime[3], amPM); // year, month, day, hour
 
-        String dateString = String.format("%d-%d-%d %d",dateTime[2],dateTime[1],dateTime[0], dateTime[3]); // year, month, day, hour
         Client client = appointment.getClient();
         int clientId = client.getId();
 
@@ -110,6 +126,10 @@ public class JDBCWriter {
         }
     }
 
+    /**
+     * Deletes the given Client from the database and subsequently deletes all appointments for that client.
+     * @param client
+     */
     public void deleteClientFromDatabase(Client client) {
         int clientId = client.getId();
         String deleteClientAppointments = "DELETE FROM ManagementSystem.tblAppointments WHERE appointment_client = " +
@@ -124,9 +144,13 @@ public class JDBCWriter {
         }
     }
 
+    /**
+     * Deletes the given Appointment from the database
+     * @param appointment
+     */
     public void deleteAppointmentFromDatabase(Appointment appointment) {
         int[] dateTime = appointment.getCalendarDateAsArray(); // {day,month,year,hour)
-        String dateString = String.format("%d-%d-%d %d",dateTime[2],dateTime[1],dateTime[0], dateTime[3]); //TODO: Add specific hour?
+        String dateString = String.format("%d-%d-%d %d",dateTime[2],dateTime[1],dateTime[0], dateTime[3]);
         Client client = appointment.getClient();
         int clientId = client.getId();
 
@@ -140,6 +164,10 @@ public class JDBCWriter {
         }
     }
 
+    /**
+     * Updates the note for the given Client in the database
+     * @param client
+     */
     public void updateClient(Client client) {
         int id = client.getId();
         String note = client.getNote();

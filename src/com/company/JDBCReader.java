@@ -8,15 +8,28 @@ import java.util.GregorianCalendar;
 public class JDBCReader {
 
     ManagementSystem managementSystemReference;
-    Connection connection; //TODO: Write this better, don't need to instantiate new writer.
+    Connection connection;
+
+    /**
+     * Sets a reference for the ManagementSystem inside the JDBCReader class
+     * @param managementSystemReference
+     */
     public JDBCReader (ManagementSystem managementSystemReference) {
         this.managementSystemReference = managementSystemReference;
     }
 
+    /**
+     * Uses a Connection argument given by the JDBCWriter in ManagementSystem.
+     * @param connection
+     */
     public void setConnection(Connection connection) {
         this.connection = connection;
     }
 
+    /**
+     * Reads all data from the tblClients and creates a new ArrayList<TableInformation> that contains those Client objects
+     * @return
+     */
     public ArrayList<TableInformation> readAllClients() {
         ArrayList<TableInformation> clientList = new ArrayList<>();
         String readClientsSQL = "SELECT * FROM ManagementSystem.tblclients;";
@@ -40,6 +53,10 @@ public class JDBCReader {
         return clientList;
     }
 
+    /**
+     * Reads all data from the tblAppointments and creates a new ArrayList<TableInformation> that contains those Appointment objects
+     * @return
+     */
     public ArrayList<TableInformation> readAllAppointments() {
         ArrayList<TableInformation> appointmentList = new ArrayList<>();
         String readAppointmentsSQL = "SELECT * FROM ManagementSystem.tblAppointments;";

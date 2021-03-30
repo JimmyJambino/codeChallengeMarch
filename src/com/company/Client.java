@@ -5,8 +5,6 @@ public class Client implements TableInformation{
     private String name;
     private int age;
     private String note;
-    private boolean deleteOnUpdate = false; // If checked, this will remove the client from the  database when updating.
-    // Potentially show list of to-be-deleted upon updating and confirm once more?
     private int columnCount = 3;
     private String[] columnNames = {"Name","Age","Note"};
 

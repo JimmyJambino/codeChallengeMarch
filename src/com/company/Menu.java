@@ -13,22 +13,21 @@ public class Menu {
     ManagementSystem managementSystemReference;
     String username;
     String password;
-    JFrame frame; // TODO: Keep a single frame, so make sure the size is correct.
+    JFrame frame;
     private Dimension resolution = Toolkit.getDefaultToolkit().getScreenSize();
     private int screenWidth = (int)resolution.getWidth();
     private int screenHeight = (int)resolution.getHeight();
     private int width = 700;
     private int height = 700;
 
-    private int xBounds = (screenWidth-width)/2; //TODO: Put all this into a method, and check for cases where screen < width etc.
-    private int yBounds = (screenHeight-height)/2;
-    //TODO: Remember this is a general constructor, we have to specify later as Client and Appointment have
-    // different columnNames and columns.
-    // I could potentially have Client and Appointment both implement an interface so that our parameter list would be
-    // ArrayList<ClientAppointmentInterface> list, in which case I could call a common variable int = columnCount.
-    public JTable tableConstructor(ArrayList<TableInformation> list) { // If I have to keep constructing this, then perhaps a LinkedList is faster?
-        // Nvm iteration for loops is the same. We are not constructing new List here, only a new array which is fast.
-        // In which case, searching through an ArrayList is faster than a LinkedList.
+    /**
+     * Returns a JTable with the information given from an ArrayList.
+     * TableInformation is an Interface that is implemented by both Client and Appointment such that they may give the
+     * necessary information to the JTable.
+     * @param list
+     * @return
+     */
+    public JTable tableConstructor(ArrayList<TableInformation> list) {
         int columnCount;
         String[] columnNames;
 
@@ -49,7 +48,7 @@ public class Menu {
                 data[i][j] = list.get(i).getColumnInfo()[j];
             }
         }
-        //JTable table = new JTable(data,columnNames);
+
         JTable table = new JTable(data,columnNames){
             public boolean editCellAt(int row, int column, java.util.EventObject e) {
                 return false;
@@ -58,6 +57,10 @@ public class Menu {
         return table;
     }
 
+    /**
+     * Returns a JPanel that shows all current Appointment objects in a JTable and gives the user relevant menu options.
+     * @return
+     */
     public JPanel manageAppointmentPanel() {
         ArrayList appointmentList = managementSystemReference.getAppointmentList();
         ArrayList<Appointment> preSortedList = (ArrayList<Appointment>) appointmentList;
@@ -90,7 +93,7 @@ public class Menu {
 
         gbc.gridy = 2;
         JButton button2 = new JButton("Add New Appointment");
-        button2.addActionListener(A -> changePanel(addAppointmentPanel())); //TODO: Make new panel for appointments
+        button2.addActionListener(A -> changePanel(addAppointmentPanel()));
         panel.add(button2, gbc);
 
         gbc.gridy = 3;
@@ -105,10 +108,11 @@ public class Menu {
         return panel;
     }
 
-
-    // Show all clients and select one from there as the basis for client_id
-    // Then ask for date for appointment and save, perfect! TODO: Rethink this
-    // Show calendar first
+    /**
+     * Returns a JPanel that shows all current clients and allows the user to select one to be added to an Appointment.
+     * The Appointment arguments are typed into the JTextField objects at the bottom of the JPanel.
+     * @return
+     */
     public JPanel addAppointmentPanel() {
         JPanel panel = new JPanel();
         GridBagLayout layout = new GridBagLayout(); //
@@ -116,7 +120,6 @@ public class Menu {
         ArrayList clientList = managementSystemReference.getClientList();
         JTable clientTable = tableConstructor(clientList);
         JScrollPane scrollPane = new JScrollPane(clientTable);
-        // bot ignore
         GridBagConstraints gbc = new GridBagConstraints();
 
         //########## GRIDBAGCONSTRAINTS SETTINGS ################
@@ -173,13 +176,18 @@ public class Menu {
         button3.addActionListener(A -> changePanel(manageAppointmentPanel()));
         gbc.gridx = 0;
         gbc.gridy = 6;
-        //gbc.gridwidth = 2;
         panel.add(button3, gbc);
 
         saveAppointment.addActionListener(A -> addAppointmentByFields(clientTable, dayField, monthField, yearField,timeField));
-        //TODO: call method that receives the info from this panel to construct new client
         return panel;
     }
+
+    /**
+     * Using getTableIndex(table) it gets the index for the selected Appointment in the table, then it can remove it using
+     * the remove() method from ArrayList. It also deletes the Appointment from the database and refreshes the window.
+     * @param list
+     * @param table
+     */
     public void removeAppointment(ArrayList<TableInformation> list, JTable table) {
         Appointment appointment = (Appointment)list.get(getTableIndex(table));
         list.remove(appointment);
@@ -187,12 +195,20 @@ public class Menu {
         changePanel(manageAppointmentPanel());
     }
 
-
+    /**
+     * Given the arguments it creates a new Appointment and adds it to the appointmentList and to the database.
+     * It also resets the JTextField objects.
+     * @param table
+     * @param dayField
+     * @param monthField
+     * @param yearField
+     * @param timeField
+     */
     public void addAppointmentByFields(
             JTable table, JTextField dayField, JTextField monthField, JTextField yearField, JTextField timeField) {
         Client client = managementSystemReference.getClientFromTable(table);
         int day = Integer.parseInt(dayField.getText());
-        int month = Integer.parseInt(monthField.getText());
+        int month = Integer.parseInt(monthField.getText())-1; // Months are 0 indexed
         int year = Integer.parseInt(yearField.getText());
         int time = Integer.parseInt(timeField.getText());
 
@@ -200,6 +216,10 @@ public class Menu {
         Appointment appointment = new Appointment(client, calendar);
         managementSystemReference.addAppointmentToList(appointment);
         managementSystemReference.writer.saveAppointmentToDatabase(appointment);
+        dayField.setText("");
+        monthField.setText("");
+        yearField.setText("");
+        timeField.setText("");
     }
 
     // Shows all current clients and allows the user to add or delete clients, as well as search for specific parameters.
@@ -370,11 +390,6 @@ public class Menu {
         changePanel(manageClientPanel());
     }
 
-    public void confirmDeleteClient(Client client) {
-        //TODO: make this later if you have time
-    }
-
-    // Ask for dialog?
     public void getClientsByNote(ArrayList<TableInformation> list, String search) {
         ArrayList<TableInformation> noteClientList = new ArrayList<>(); // Needs to be another TableInformation list as we need it for the table construction.
         for(int i = 0; i < list.size(); i++) {
@@ -467,14 +482,21 @@ public class Menu {
         //gbc.gridwidth = 2;
         panel.add(button3, gbc);
 
-        saveClient.addActionListener(A -> addChildByFields(nameField.getText(),ageField.getText(),noteField.getText(),nameField,ageField));
+        saveClient.addActionListener(A -> addClientByFields(nameField.getText(),ageField.getText(),noteField.getText(),nameField,ageField));
         //TODO: call method that receives the info from this panel to construct new client
         return panel;
     }
 
-    //TODO: Needs to check for integer age, clear all fields upon being called, and make button disabled.
-    public void addChildByFields(String name, String age, String note, JTextField nameField, JTextField ageField) {
-        //checkInteger(age);
+    /**
+     * Using the given arguments it will add a new Client to the clientList and to the database. It also resets the
+     * JTextFields to indicate the Client has been saved.
+     * @param name
+     * @param age
+     * @param note
+     * @param nameField
+     * @param ageField
+     */
+    public void addClientByFields(String name, String age, String note, JTextField nameField, JTextField ageField) {
         if(checkInteger(age) && checkStringValue(name)) {
             int intAge = Integer.parseInt(age);
             Client client = new Client(name,intAge,note);
@@ -501,6 +523,11 @@ public class Menu {
         return true;
     }
 
+    /**
+     * Checks the
+     * @param name
+     * @return
+     */
     public boolean checkStringValue(String name) {
         if(name.length() == 0) {
             return false;
@@ -524,10 +551,13 @@ public class Menu {
         }
     }
 
+    /**
+     * Initializes a Frame (Main window) with a predetermined size, adds a JPanel to it and positions the window
+     * in the middle of the screen.
+     */
     public void initializeWindow() {
-        JFrame.setDefaultLookAndFeelDecorated(true); // *chefs kiss*
-        //JFrame frame = new JFrame("Layout");
-        frame = new JFrame("Layout");
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        frame = new JFrame("Main Window");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         Container container = frame.getContentPane();
@@ -535,10 +565,12 @@ public class Menu {
         frame.pack();
         frame.setBounds((screenWidth-width)/2,(screenHeight-height)/2,width,height); // x and y are pixel location on startup
         frame.setVisible(true);
-        //frame.setBounds(100,100,600,200); // figure out a standard window size
     }
 
-    // Works for now.
+    /**
+     * Clears all content in the frame (Main window), adds a new JPanel and refreshes the window.
+     * @param panel
+     */
     private void changePanel(JPanel panel) {
         frame.getContentPane().removeAll();
         frame.getContentPane().add(panel);
@@ -620,17 +652,6 @@ public class Menu {
         return panel;
     }
 
-
-    public void loginMenu(Container container) {
-        frame = new JFrame("Login");
-
-        //Container container = frame.getContentPane();
-        //container.add(panel);
-        frame.setContentPane(container);
-        frame.pack();
-        frame.setVisible(true);
-        frame.setBounds(100,100,600,200); // figure out a standard window size
-    }
     public void setLoginCredentials(String username, String password) {
         this.username = username;
         this.password = password;
@@ -662,50 +683,16 @@ public class Menu {
         }
     }
 
-    // Doesn't work as intended. Use a container replacement instead.
-    public void clearFrame(JFrame frame) { //TODO: Make this method nicer, consider making JFrame a class variable
-        frame.getContentPane().removeAll(); // Removes all content
-        frame.getContentPane().revalidate(); // What does this do?
-        frame.getContentPane().repaint(); // Repaints the window
-    }
 
     public Menu(ManagementSystem managementSystemReference) {
         this.managementSystemReference = managementSystemReference;
     }
 
-    // First check if a txtfile named login exists, if not, ask for database login and if connection is good, save that info in a login.txt
-    public void isCorrectLogin() {
-        if(readLoginFile("login")) { // method that reads file and checks if it exists
-            //TODO: Connect to DB, if gotConnection then...go to main menu
-            while(!managementSystemReference.getHasConnection()) {
-
-            }
-            managementSystemReference.setupJDBC(username,password); // username and password may be wrong, how to deal?
-            // Maybe just go to login menu in case there is an error.
-        } else {
-            System.out.println("loginMenu");
-            loginMenu(loginMenuContainer());
-        }
-
-    }
-    // Dialogues are added on top of a frame, given in the JDialog constructor.
-    // That means we need another method to setup the "main" frame of menu choices.
-    // Maybe no dialogues? And just have a login screen?
-    public void dialogTest() {
-        // While there is no connection
-        // Check file for credentials and if there is still no connection then we try to type in new credentials
-        /*
-        if(readLoginFile("login")) {
-            managementSystemReference.setupJDBC(username,password);
-        } else {
-            loginDialogue();
-        }
-        if(!managementSystemReference.getHasConnection()) {
-            loginDialogue();
-        }
-
-         */
-
+    /**
+     * Creates a pop-up Dialog in case the user hasn't logged in before or their username and password are incorrect.
+     * It will continue to prompt the user for the correct credentials until given or program is exited.
+     */
+    public void loginDialog() {
         while(!managementSystemReference.getHasConnection()) {
             readLoginFile("login");
             managementSystemReference.setupJDBC(username,password);
@@ -714,65 +701,15 @@ public class Menu {
             }
         }
     }
-    public Container loginMenuContainer() {
-        JPanel panel = new JPanel();
-        GridBagLayout layout = new GridBagLayout(); //
-        panel.setLayout(layout);
-        GridBagConstraints gbc = new GridBagConstraints();
 
-        //########## GRIDBAGCONSTRAINTS SETTINGS ################
-        gbc.fill = GridBagConstraints.HORIZONTAL; // Fills out the empty space of button text
-        int paddingSize = 3;
-        gbc.insets = new Insets(paddingSize,paddingSize,paddingSize,paddingSize); // Padding
-        //#######################################################
-
-        JLabel usernameText = new JLabel("USERNAME: ");
-        JLabel passwordText = new JLabel("PASSWORD: ");
-        JTextField usernameField = new JTextField("USERNAME");
-        JTextField passwordField = new JTextField("PASSWORD");
-        JButton login = new JButton("Login");
-
-        gbc.gridx = 0; // x position, goes left to right
-        gbc.gridy = 0; // y position, goes top to bottom
-        panel.add(usernameText, gbc);
-        gbc.gridx = 1;
-        panel.add(usernameField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(passwordText, gbc);
-        gbc.gridx = 1;
-        panel.add(passwordField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        panel.add(login, gbc);
-
-        JButton exitProgram = new JButton("Exit Program");
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 2;
-        panel.add(exitProgram, gbc);
-
-        login.addActionListener(A -> setLoginCredentials(usernameField.getText(),passwordField.getText()));
-        exitProgram.addActionListener(A -> System.exit(0));
-        Container container = new Container();
-        container.add(panel);
-        return container;
-    }
 
     public void loginDialogue() {
         JDialog dialog = new JDialog(frame,"Example",true);
-        //frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         //dialog.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         dialog.setLayout(new GridBagLayout());
-        //frame = new JFrame("Login"); // Don't need this one, it will only make another "empty" window
-        // top ignore
         JPanel panel = new JPanel();
         GridBagLayout layout = new GridBagLayout(); //
         panel.setLayout(layout);
-        // bot ignore
         GridBagConstraints gbc = new GridBagConstraints();
 
         //########## GRIDBAGCONSTRAINTS SETTINGS ################
@@ -804,25 +741,18 @@ public class Menu {
         gbc.gridwidth = 2;
         dialog.add(login, gbc);
 
-        JButton noSQL = new JButton("I don't have MySQL");
+        JButton noSQL = new JButton("Exit Program");
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
+        noSQL.addActionListener(A -> System.exit(0));
         dialog.add(noSQL, gbc);
 
         login.addActionListener(A -> setLoginCredentials(usernameField.getText(),passwordField.getText()));
-        noSQL.addActionListener(A -> System.out.println("Continue")); //TODO: Make this one close the dialogue window and setup demo of program.
-        //Container container = frame.getContentPane();
-        //container.add(panel);
-            /*
-            frame.pack();
-            frame.setVisible(true);
-            frame.setBounds(100,100,600,200); // figure out a standard window size
 
-             */
         dialog.setSize(300,300); //TODO: Change start position on screen.
         dialog.setBounds((screenWidth-300)/2,(screenHeight-300)/2,300,300);
-        dialog.setVisible(true); //TODO: This one needs info, so the background (frame) is actually unnecessary.
+        dialog.setVisible(true);
     }
 
     public int getTableIndex(JTable table) {
