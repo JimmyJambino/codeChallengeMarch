@@ -10,10 +10,10 @@ import java.io.PrintStream;
 import java.util.*;
 
 public class Menu {
-    ManagementSystem managementSystemReference;
-    String username;
-    String password;
-    JFrame frame;
+    private ManagementSystem managementSystemReference;
+    private String username;
+    private String password;
+    private JFrame frame;
     private Dimension resolution = Toolkit.getDefaultToolkit().getScreenSize();
     private int screenWidth = (int)resolution.getWidth();
     private int screenHeight = (int)resolution.getHeight();
@@ -792,18 +792,18 @@ public class Menu {
      * Creates a pop-up Dialog in case the user hasn't logged in before or their username and password are incorrect.
      * It will continue to prompt the user for the correct credentials until given or program is exited.
      */
-    public void loginDialog() {
+    public void checkLogin() {
         while(!managementSystemReference.getHasConnection()) {
             readLoginFile("login");
             managementSystemReference.setupJDBC(username,password);
             if(!managementSystemReference.getHasConnection()) { //TODO: Right now it continues even when the window is closed. This is fine, we can exit program with another button.
-                loginDialogue();
+                loginDialog();
             }
         }
     }
 
 
-    public void loginDialogue() {
+    public void loginDialog() {
         JDialog dialog = new JDialog(frame,"Login",true);
         //dialog.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         dialog.setLayout(new GridBagLayout());

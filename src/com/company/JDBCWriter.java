@@ -4,8 +4,8 @@ import java.sql.*;
 
 public class JDBCWriter {
 
-    ManagementSystem managementSystemReference;
-    Connection connection;
+    private ManagementSystem managementSystemReference;
+    private Connection connection;
 
     /**
      * Sets a reference for the ManagementSystem inside the JDBCWriter class

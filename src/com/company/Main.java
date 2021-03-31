@@ -6,6 +6,6 @@ public class Main {
         ManagementSystem managementSystem = new ManagementSystem();
         Menu menu = new Menu(managementSystem);
         menu.initializeWindow();
-        menu.loginDialog(); //TODO: Refactor this.
+        menu.checkLogin(); //TODO: Refactor this.
     }
 }

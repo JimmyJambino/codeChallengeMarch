@@ -7,8 +7,8 @@ import java.util.GregorianCalendar;
 
 public class JDBCReader {
 
-    ManagementSystem managementSystemReference;
-    Connection connection;
+    private ManagementSystem managementSystemReference;
+    private Connection connection;
 
     /**
      * Sets a reference for the ManagementSystem inside the JDBCReader class
