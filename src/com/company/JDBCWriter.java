@@ -1,8 +1,6 @@
 package com.company;
 
 import java.sql.*;
-import java.util.Calendar;
-import java.util.Date;
 
 public class JDBCWriter {
 
@@ -29,19 +27,21 @@ public class JDBCWriter {
     public void setConnection(String username, String password) {
         System.out.println(username + " " + password);
 
-        //TODO: Change kindergarten to proper database, also have method to initialize database
         final String JDBC = String.format("jdbc:mysql://localhost?user=%s?serverTimezone=UTC",username);
         String createDatabaseSQL = "CREATE DATABASE IF NOT EXISTS ManagementSystem;";
         String tableClientSQL = "CREATE TABLE IF NOT EXISTS ManagementSystem.tblClients(" +
                 "client_id INT NOT NULL UNIQUE PRIMARY KEY AUTO_INCREMENT, " +
                 "client_name VARCHAR(50) NOT NULL, " +
                 "client_age INT NOT NULL, " +
+                "client_phone VARCHAR(20) NOT NULL, " +
+                "client_email VARCHAR(50) NOT NULL, " +
+                "client_industry VARCHAR(50) NOT NULL, " +
                 "client_note VARCHAR(300)" +
                 ");";
         String tableAppointmentSQL = "CREATE TABLE IF NOT EXISTS ManagementSystem.tblAppointments(" +
                 "appointment_id INT NOT NULL UNIQUE PRIMARY KEY AUTO_INCREMENT," +
                 "appointment_date DATETIME NOT NULL," +
-                "appointment_isAM BOOLEAN NOT NULL," +
+                "appointment_hour INT NOT NULL, " +
                 "appointment_client INT NOT NULL, " +
                 "CONSTRAINT client_fk FOREIGN KEY (appointment_client) REFERENCES tblClients(client_id)" +
                 ");";
@@ -72,12 +72,15 @@ public class JDBCWriter {
     public void saveClientToDatabase(Client client) {
         String name = client.getName();
         int age = client.getAge();
+        String phone = client.getPhonenumber();
+        String email = client.getEmail();
+        String industry = client.getIndustry();
         String note = client.getNote();
 
         // SQL Statement clientSQL adds a new client's details into the database when executed.
         String clientSQL = "INSERT INTO ManagementSystem.tblClients VALUES (" +
                 "Default, '" + name + "'," + age + ",'" +
-                note + "');";
+                phone + "', '" +email + "', '" + industry + "', '" + note + "');";
 
         // SQL Statement lastAddedSQL returns the last added client's id from the database when executed.
         String lastAddedSQL = "SELECT client_id FROM ManagementSystem.tblClients ORDER BY client_id DESC LIMIT 1;";
@@ -104,8 +107,7 @@ public class JDBCWriter {
     public void saveAppointmentToDatabase(Appointment appointment) {
         //Calendar date = appointment.getCalendarDate();
         int[] dateTime = appointment.getCalendarDateAsArray(); // {day,month,year,hour)
-        boolean isAM = appointment.getIsAM();
-        int isPM = isAM ? 1 : 0;
+        int hour = appointment.getHour();
 
         String dateString = String.format("%d-%d-%d %d",dateTime[2],dateTime[1]+1,dateTime[0], dateTime[3]); // year, month, day, hour
 
@@ -114,7 +116,7 @@ public class JDBCWriter {
 
         // SQL Statement clientSQL adds a new appointment's details into the database when executed.
         String appointmentSQL = "INSERT INTO ManagementSystem.tblAppointments VALUES (DEFAULT, " +
-                "'" + dateString + "'," + 1 + "," + clientId + ");";
+                "'" + dateString + "'," + hour + "," + clientId + ");";
 
         // SQL Statement lastAddedSQL returns the last added appointments's id from the database when executed.
         String lastAddedSQL = "SELECT appointment_id FROM ManagementSystem.tblAppointments ORDER BY appointment_id DESC LIMIT 1;";
@@ -157,24 +159,14 @@ public class JDBCWriter {
     public void deleteAppointmentFromDatabase(Appointment appointment) {
         int[] dateTime = appointment.getCalendarDateAsArray(); // {day,month,year,hour)
         String dateString;
-        if(appointment.getIsAM()) {
-            dateString = String.format("%d-%d-%d %d",dateTime[2],dateTime[1],dateTime[0], dateTime[3]);
-        } else {
-            dateString = String.format("%d-%d-%d %d",dateTime[2],dateTime[1],dateTime[0], dateTime[3]+12);
-        }
 
         Client client = appointment.getClient();
         int clientId = client.getId();
-
-        String deleteAppointmentSQL = "DELETE FROM ManagementSystem.tblAppointments WHERE appointment_date = '" +
-                dateString + "' AND appointment_client = " + clientId + ";";
-        System.out.println("ID: " + appointment.getId());
-        System.out.println("CLIENT: " + clientId);
-        String delete = "DELETE FROM ManagementSystem.tblAppointments WHERE appointment_id = " + appointment.getId() +
+        String deleteAppointmentSQL = "DELETE FROM ManagementSystem.tblAppointments WHERE appointment_id = " + appointment.getId() +
                 " AND appointment_client = " + clientId + ";";
         try {
             Statement statement = connection.createStatement();
-            statement.executeUpdate(delete);
+            statement.executeUpdate(deleteAppointmentSQL);
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
@@ -186,11 +178,22 @@ public class JDBCWriter {
      */
     public void updateClient(Client client) {
         int id = client.getId();
+        String name = client.getName();
+        int age = client.getAge();
+        String phone = client.getPhonenumber();
+        String email = client.getEmail();
+        String industry = client.getIndustry();
         String note = client.getNote();
 
         String updateClientSQL = "UPDATE ManagementSystem.tblClients " +
-                "SET client_note = '" + note + "' " +
+                "SET client_name = '" + name + "', " +
+                "client_age = " + age + ", " +
+                "client_phone = '" + phone + "', " +
+                "client_email = '" + email + "', " +
+                "client_industry = '" + industry + "', " +
+                "client_note = '" + note + "' " +
                 "WHERE client_id = " + id + ";";
+
         try {
             Statement statement = connection.createStatement();
             statement.executeUpdate(updateClientSQL);

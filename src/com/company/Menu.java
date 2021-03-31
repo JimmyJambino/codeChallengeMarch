@@ -85,11 +85,13 @@ public class Menu {
         panel.add(scrollPane,gbc);
 
         gbc.gridx = 0; // x position, goes left to right
+        /*
         gbc.gridy = 1; // y position, goes top to bottom
         JButton button1 = new JButton("Print index");
         button1.addActionListener(A -> ManagementSystem.printSelectedRowIndex(appointmentTable));
         // Enable button with checkRowSelection?
         panel.add(button1, gbc);
+         */
 
         gbc.gridy = 2;
         JButton button2 = new JButton("Add New Appointment");
@@ -213,7 +215,7 @@ public class Menu {
         int time = Integer.parseInt(timeField.getText());
 
         Calendar calendar = new GregorianCalendar(year,month,day,time,0);
-        Appointment appointment = new Appointment(client, calendar);
+        Appointment appointment = new Appointment(client, calendar, time);
         managementSystemReference.addAppointmentToList(appointment);
         managementSystemReference.writer.saveAppointmentToDatabase(appointment);
         dayField.setText("");
@@ -246,7 +248,7 @@ public class Menu {
 
         gbc.gridx = 0; // x position, goes left to right
         gbc.gridy = 1; // y position, goes top to bottom
-        JButton button1 = new JButton("Update Client Info");
+        JButton button1 = new JButton("Update Selected Client's Info");
         button1.addActionListener(A -> changePanel(editClientPanel(clientTable)));
         // Enable button with checkRowSelection?
         panel.add(button1, gbc);
@@ -262,14 +264,15 @@ public class Menu {
         panel.add(button3, gbc);
 
         gbc.gridy = 4;
+        JButton button5 = new JButton("Search By Note");
+        button5.addActionListener(A -> searchDialog(clientList));
+        panel.add(button5, gbc);
+
+        gbc.gridy = 5;
         JButton button4 = new JButton("Previous Menu");
         button4.addActionListener(C -> changePanel(startMenuPanel()));
         panel.add(button4, gbc);
 
-        gbc.gridy = 5;
-        JButton button5 = new JButton("Search Dialog");
-        button5.addActionListener(A -> searchDialog(clientList));
-        panel.add(button5, gbc);
         return panel;
     }
 
@@ -312,14 +315,15 @@ public class Menu {
         panel.add(button3, gbc);
 
         gbc.gridy = 4;
+        JButton button5 = new JButton("Search By Note");
+        button5.addActionListener(A -> searchDialog(clientList));
+        panel.add(button5, gbc);
+
+        gbc.gridy = 5;
         JButton button4 = new JButton("Previous Menu");
         button4.addActionListener(C -> changePanel(startMenuPanel()));
         panel.add(button4, gbc);
 
-        gbc.gridy = 5;
-        JButton button5 = new JButton("Search Dialog");
-        button5.addActionListener(A -> searchDialog(clientList));
-        panel.add(button5, gbc);
         return panel;
     }
 
@@ -337,32 +341,76 @@ public class Menu {
 
         Client client = (Client)managementSystemReference.getClientList().get(getTableIndex(table));
         String clientName = client.getName();
+        String ageString = String.format("%d", client.getAge());
+        String phone = client.getPhonenumber();
+        String email = client.getEmail();
+        String industry = client.getIndustry();
         String clientNote = client.getNote();
 
         gbc.gridx = 0; // x position, goes left to right
         gbc.gridy = 0; // y position, goes top to bottom
 
-        JLabel nameText = new JLabel("Client : " + clientName);
+        JLabel nameText = new JLabel("Name: ");
         panel.add(nameText, gbc);
 
+        gbc.gridx = 1;
+        JTextField nameField = new JTextField(clientName, 50);
+        panel.add(nameField, gbc);
+
         gbc.gridx = 0;
-        gbc.gridy = 1;
-        JLabel noteText = new JLabel("Note: ");
-        panel.add(noteText, gbc); //TODO: Make this bigger?
+        gbc.gridy = 2;
+        JLabel ageText = new JLabel("Age: ");
+        panel.add(ageText, gbc);
 
         gbc.gridx = 1;
-        JTextField noteField = new JTextField(clientNote,50); // Can only make it wider...
+        JTextField ageField = new JTextField(ageString);
+        panel.add(ageField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        JLabel phoneText = new JLabel("Phone: ");
+        panel.add(phoneText, gbc);
+
+        gbc.gridx = 1;
+        JTextField phoneField = new JTextField(phone);
+        panel.add(phoneField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        JLabel emailText = new JLabel("Email: ");
+        panel.add(emailText, gbc);
+
+        gbc.gridx = 1;
+        JTextField emailField = new JTextField(email);
+        panel.add(emailField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        JLabel industryText = new JLabel("Industry: ");
+        panel.add(industryText, gbc);
+
+        gbc.gridx = 1;
+        JTextField industryField = new JTextField(industry);
+        panel.add(industryField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        JLabel noteText = new JLabel("Note: ");
+        panel.add(noteText, gbc);
+
+        gbc.gridx = 1;
+        JTextField noteField = new JTextField(clientNote);
         panel.add(noteField, gbc);
 
         gbc.gridwidth = 2;
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 7;
         JButton button1 = new JButton("Update Client");
-        button1.addActionListener(A -> updateClient(client, noteField));
+        button1.addActionListener(A -> updateClient(client, nameField, ageField, phoneField, emailField, industryField, noteField));
         panel.add(button1, gbc);
 
-        gbc.gridy = 3;
+        gbc.gridy = 8;
         JButton button2 = new JButton("Previous Menu");
         button2.addActionListener(A -> changePanel(manageClientPanel()));
         panel.add(button2, gbc);
@@ -370,9 +418,31 @@ public class Menu {
         return panel;
     }
 
-    public void updateClient(Client client, JTextField noteField) {
-        client.setNote(noteField.getText());
-        managementSystemReference.writer.updateClient(client);
+    /**
+     * This method intentionally doesn't reset the fields inside JTextField objects in the window because it is working with a specific
+     * Client and as such, if the user accidently clicks update twice, then all fields will be lost.
+     * @param client
+     * @param nameField
+     * @param ageField
+     * @param phoneField
+     * @param emailField
+     * @param industryField
+     * @param noteField
+     */
+    public void updateClient(
+            Client client, JTextField nameField, JTextField ageField, JTextField phoneField, JTextField emailField, JTextField industryField, JTextField noteField) {
+        if(checkInteger(ageField.getText())) {
+            client.setName(nameField.getText());
+            client.setAge(Integer.parseInt(ageField.getText()));
+            client.setPhonenumber(phoneField.getText());
+            client.setEmail(emailField.getText());
+            client.setIndustry(industryField.getText());
+            client.setNote(noteField.getText());
+            managementSystemReference.writer.updateClient(client);
+        } else {
+            System.out.println("Wrong input. Try again.");
+        }
+
     }
 
     //TODO: Split this into 2 methods.
@@ -392,9 +462,11 @@ public class Menu {
 
     public void getClientsByNote(ArrayList<TableInformation> list, String search) {
         ArrayList<TableInformation> noteClientList = new ArrayList<>(); // Needs to be another TableInformation list as we need it for the table construction.
+        String lowerCaseSearch = search.toLowerCase();
         for(int i = 0; i < list.size(); i++) {
             Client client = (Client)list.get(i);
-            if(client.getNote().contains(search)) {
+            String clientLowerCaseNote = client.getNote().toLowerCase();
+            if(clientLowerCaseNote.contains(lowerCaseSearch)) {
                 noteClientList.add(client);
             }
         }
@@ -432,16 +504,15 @@ public class Menu {
 
         search.addActionListener(A -> getClientsByNote(list, searchField.getText()));
 
-        dialog.setSize(300,300); //TODO: Change start position on screen.
+        dialog.setSize(300,300);
         dialog.setBounds((screenWidth-300)/2,(screenHeight-300)/2,300,300);
-        dialog.setVisible(true); //TODO: This one needs info, so the background (frame) is actually unnecessary.
+        dialog.setVisible(true);
     }
 
     public JPanel addClientPanel() {
         JPanel panel = new JPanel();
         GridBagLayout layout = new GridBagLayout(); //
         panel.setLayout(layout);
-        // bot ignore
         GridBagConstraints gbc = new GridBagConstraints();
 
         //########## GRIDBAGCONSTRAINTS SETTINGS ################
@@ -452,10 +523,16 @@ public class Menu {
 
         JLabel nameText = new JLabel("Name: ");
         JLabel ageText = new JLabel("Age: ");
-        JLabel noteText = new JLabel("Note: "); //TODO: Add this?
-        JTextField nameField = new JTextField("");
+        JLabel phoneText = new JLabel("Phonenumber: ");
+        JLabel emailText = new JLabel("Email: ");
+        JLabel industryText = new JLabel("Industry: ");
+        JLabel noteText = new JLabel("Note: ");
+        JTextField nameField = new JTextField("", 20);
         JTextField ageField = new JTextField("");
-        JTextField noteField = new JTextField(""); // TODO: Make it bigger
+        JTextField phoneField = new JTextField("");
+        JTextField emailField = new JTextField("");
+        JTextField industryField = new JTextField("");
+        JTextField noteField = new JTextField("");
         JButton saveClient = new JButton("Save Client");
 
         gbc.gridx = 0; // x position, goes left to right
@@ -472,17 +549,42 @@ public class Menu {
 
         gbc.gridx = 0;
         gbc.gridy = 2;
+        panel.add(phoneText, gbc);
+        gbc.gridx = 1;
+        panel.add(phoneField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        panel.add(emailText, gbc);
+        gbc.gridx = 1;
+        panel.add(emailField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        panel.add(industryText, gbc);
+        gbc.gridx = 1;
+        panel.add(industryField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        panel.add(noteText, gbc);
+        gbc.gridx = 1;
+        panel.add(noteField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         panel.add(saveClient, gbc);
 
         JButton button3 = new JButton("Previous Menu");
         button3.addActionListener(A -> changePanel(manageClientPanel()));
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 7;
         //gbc.gridwidth = 2;
         panel.add(button3, gbc);
 
-        saveClient.addActionListener(A -> addClientByFields(nameField.getText(),ageField.getText(),noteField.getText(),nameField,ageField));
+        saveClient.addActionListener(A -> addClientByFields(
+                nameField.getText(),ageField.getText(),noteField,nameField,ageField, phoneField, emailField, industryField));
         //TODO: call method that receives the info from this panel to construct new client
         return panel;
     }
@@ -492,18 +594,28 @@ public class Menu {
      * JTextFields to indicate the Client has been saved.
      * @param name
      * @param age
-     * @param note
+     * @param noteField
      * @param nameField
      * @param ageField
      */
-    public void addClientByFields(String name, String age, String note, JTextField nameField, JTextField ageField) {
+    public void addClientByFields(
+            String name, String age, JTextField noteField, JTextField nameField, JTextField ageField, JTextField phoneField,
+            JTextField emailField, JTextField industryField) {
         if(checkInteger(age) && checkStringValue(name)) {
             int intAge = Integer.parseInt(age);
-            Client client = new Client(name,intAge,note);
+            String phone = phoneField.getText();
+            String email = emailField.getText();
+            String industry = industryField.getText();
+            String note = noteField.getText();
+            Client client = new Client(name,intAge,phone,email,industry,note);
             managementSystemReference.addClientToList(client);
             managementSystemReference.writer.saveClientToDatabase(client);
             nameField.setText("");
             ageField.setText("");
+            phoneField.setText("");
+            emailField.setText("");
+            industryField.setText("");
+            noteField.setText("");
         } else {
             System.out.println("Wrong input. Try again.");
         }
@@ -591,63 +703,50 @@ public class Menu {
         int paddingWidth = 30; // TODO: Should be based on box size
         gbc.insets = new Insets(paddingSize,paddingWidth,paddingSize,paddingWidth); // Padding
 
-        gbc.gridx = 0; // x position, goes left to right
-        gbc.gridy = 0; // y position, goes top to bottom
+        gbc.gridx = 0; // x position, goes from left to right
+        gbc.gridy = 0;
+        try {
+            BufferedImage image = ImageIO.read(new File("clientmanagerpicAlpha.png"));
+            JLabel labelPic = new JLabel(new ImageIcon(image.getScaledInstance(630,300, Image.SCALE_FAST)));
+            panel.add(labelPic,gbc);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        gbc.gridy = 1; //TODO: Use ++ in the future, this is ridiculous.
+        JLabel filler1 = new JLabel("-----------------------------------------------------------------------------------------------------------------------" +
+                "--------------------------------------");
+        panel.add(filler1, gbc);
+        gbc.gridy = 2;
+        JLabel filler2 = new JLabel("-----------------------------------------------------------------------------------------------------------------------" +
+                "--------------------------------------");
+        panel.add(filler2, gbc);
+
+        gbc.gridy = 3;
+        JLabel quoteOfTheDay = new JLabel(managementSystemReference.randomQuote());
+        panel.add(quoteOfTheDay, gbc);
+
+        gbc.gridy = 4;
+        JLabel filler3 = new JLabel("-----------------------------------------------------------------------------------------------------------------------" +
+                "--------------------------------------");
+        panel.add(filler3, gbc);
+
+        gbc.gridy = 5;
+        JLabel filler4 = new JLabel("-----------------------------------------------------------------------------------------------------------------------" +
+                "--------------------------------------");
+        panel.add(filler4, gbc);
+
+        gbc.gridy = 6; // y position, goes top to bottom
         gbc.weightx = 1; // Fills out the entire empty space on x-axis
         JButton button1 = new JButton("Manage Clients");
         button1.addActionListener(A -> changePanel(manageClientPanel()));
         panel.add(button1, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 7;
         JButton button2 = new JButton("Manage Appointments");
         button2.addActionListener(A -> changePanel(manageAppointmentPanel()));
         panel.add(button2, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        //gbc.gridwidth = 3;
-        panel.add(new JButton("Show Client List"), gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-
-        panel.add(new JButton("Check Calendar"), gbc);
-
-        String title1 = " _____ _____ _____ _____ _____ _____ __ __      _____ _____ _____ _____ _____ _____ _____ ";
-        String title2 = "|_   _|  |  |   __| __  |  _  |  _  |  |  |    |     |  _  |   | |  _  |   __|   __| __  |";
-        String title3 = "  | | |     |   __|    -|     |   __|_   _|    | | | |     | | | |     |  |  |   __|    -|";
-        String title4 = "  |_| |__|__|_____|__|__|__|__|__|    |_|      |_|_|_|__|__|_|___|__|__|_____|_____|__|__|";
-        gbc.gridy = 6;
-        JLabel label1 = new JLabel(title1);
-        label1.setFont(new Font("Monospaced", Font.PLAIN,12));
-        panel.add(label1, gbc);
-        gbc.gridy = 7;
-        JLabel label2 = new JLabel(title2);
-        label2.setFont(new Font("Monospaced", Font.PLAIN,12));
-        panel.add(label2, gbc);
-        gbc.gridy = 8;
-        JLabel label3 = new JLabel(title3);
-        label3.setFont(new Font("Monospaced", Font.PLAIN,12));
-        panel.add(label3, gbc);
-        gbc.gridy = 9;
-        JLabel label4 = new JLabel(title4);
-        label4.setFont(new Font("Monospaced", Font.PLAIN,12));
-        panel.add(label4, gbc);
-
-        gbc.gridy = 10;
-        try {
-            BufferedImage image = ImageIO.read(new File("therapymanagerPaintAlpha.png"));
-            JLabel labelPic = new JLabel(new ImageIcon(image.getScaledInstance(400,200, Image.SCALE_FAST)));
-            //labelPic.setBounds(10,10,10,10);
-            panel.add(labelPic,gbc);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        gbc.gridy = 11;
-        JLabel quoteOfTheDay = new JLabel(managementSystemReference.randomQuote());
-        panel.add(quoteOfTheDay, gbc);
 
         return panel;
     }
@@ -704,7 +803,7 @@ public class Menu {
 
 
     public void loginDialogue() {
-        JDialog dialog = new JDialog(frame,"Example",true);
+        JDialog dialog = new JDialog(frame,"Login",true);
         //dialog.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         dialog.setLayout(new GridBagLayout());
         JPanel panel = new JPanel();

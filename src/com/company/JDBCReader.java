@@ -40,8 +40,11 @@ public class JDBCReader {
                 int id = resultSet.getInt("client_id");
                 String name = resultSet.getString("client_name");
                 int age = resultSet.getInt("client_age");
+                String phone = resultSet.getString("client_phone");
+                String email = resultSet.getString("client_email");
+                String industry = resultSet.getString("client_industry");
                 String note = resultSet.getString("client_note");
-                Client client = new Client(name, age, note);
+                Client client = new Client(name, age, phone, email, industry, note);
                 client.setId(id);
                 clientList.add(client);
             }
@@ -71,14 +74,12 @@ public class JDBCReader {
                 calendar.setTime(date);
                 int appointment_id = resultSet.getInt("appointment_id");
                 int client_id = resultSet.getInt("appointment_client");
-                boolean isAM = resultSet.getBoolean("appointment_isAM");
+                int hour = resultSet.getInt("appointment_hour");
                 Client client = managementSystemReference.getClientById(client_id);
-                Appointment appointment = new Appointment(client, calendar);
-                appointment.setIsAM(isAM);
-                if(!appointment.getIsAM()) {
-                    int[] dateArray = appointment.getCalendarDateAsArray();
-                    appointment.getCalendarDate().set(dateArray[2],dateArray[1],dateArray[0], dateArray[3]+12,0);
-                }
+                Appointment appointment = new Appointment(client, calendar, hour);
+                int[] timeArray = appointment.getCalendarDateAsArray();
+                Calendar actualCalendar = new GregorianCalendar(timeArray[2],timeArray[1]+1,timeArray[0], hour, 0);
+                appointment.setMyCalendar(actualCalendar);
                 appointment.setId(appointment_id);
                 appointmentList.add(appointment);
             }

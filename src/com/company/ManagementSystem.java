@@ -29,7 +29,7 @@ public class ManagementSystem {
         quoteList.add("Done is better than perfect.");
         quoteList.add("Failure is simply an opportunity to begin again, this time more intelligently.");
         quoteList.add("What would you do if you weren't afraid?");
-        quoteList.add("All things are a difficult before they are easy.");
+        quoteList.add("All things are difficult before they are easy.");
         quoteList.add("If we're growing, we're always going to be out of comfort zone.");
         quoteList.add("Every morning we are born again. What we do today is what matters most.");
         quoteList.add("There is no path to happiness: happiness is the path.");

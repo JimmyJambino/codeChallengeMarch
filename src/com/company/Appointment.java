@@ -7,29 +7,14 @@ public class Appointment implements TableInformation{
     private Client client;
     private int id;
     private Calendar myCalendar;
-    private boolean isAM; // AM or PM
+    private int hour;
     private int columnCount = 2;
     private String[] columnNames = {"Client","Date"};
 
-    public Appointment(Client client, Calendar calendar) {
+    public Appointment(Client client, Calendar calendar, int hour) {
         this.client = client;
         this.myCalendar = calendar;
-        setIsAM();
-    }
-
-    public void setIsAM() {
-        if (myCalendar.get(Calendar.HOUR) >= 12) {
-            isAM = true;
-        } else {
-            isAM = false;
-        }
-    }
-
-    public void setIsAM(boolean isAM) {
-        this.isAM = isAM;
-    }
-    public boolean getIsAM() {
-        return isAM;
+        setHour(hour);
     }
 
     public void setId(int id) {
@@ -56,6 +41,9 @@ public class Appointment implements TableInformation{
     public Calendar getCalendarDate() {
         return myCalendar;
     }
+    public void setMyCalendar(Calendar calendar) {
+        myCalendar = calendar;
+    }
 
     public int getColumnCount() {
         return columnCount;
@@ -66,5 +54,12 @@ public class Appointment implements TableInformation{
     public String[] getColumnInfo() {
         String[] info = {client.getName(),myCalendar.getTime().toString()};
         return info;
+    }
+
+    public void setHour(int hour) {
+        this.hour = hour;
+    }
+    public int getHour() {
+        return hour;
     }
 }
