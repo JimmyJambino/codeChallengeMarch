@@ -193,7 +193,7 @@ public class Menu {
     public void removeAppointment(ArrayList<TableInformation> list, JTable table) {
         Appointment appointment = (Appointment)list.get(getTableIndex(table));
         list.remove(appointment);
-        managementSystemReference.writer.deleteAppointmentFromDatabase(appointment);
+        managementSystemReference.getWriter().deleteAppointmentFromDatabase(appointment);
         changePanel(manageAppointmentPanel());
     }
 
@@ -217,7 +217,7 @@ public class Menu {
         Calendar calendar = new GregorianCalendar(year,month,day,time,0);
         Appointment appointment = new Appointment(client, calendar, time);
         managementSystemReference.addAppointmentToList(appointment);
-        managementSystemReference.writer.saveAppointmentToDatabase(appointment);
+        managementSystemReference.getWriter().saveAppointmentToDatabase(appointment);
         dayField.setText("");
         monthField.setText("");
         yearField.setText("");
@@ -438,7 +438,7 @@ public class Menu {
             client.setEmail(emailField.getText());
             client.setIndustry(industryField.getText());
             client.setNote(noteField.getText());
-            managementSystemReference.writer.updateClient(client);
+            managementSystemReference.getWriter().updateClient(client);
         } else {
             System.out.println("Wrong input. Try again.");
         }
@@ -449,7 +449,7 @@ public class Menu {
     public void removeClient(ArrayList<TableInformation> list, JTable table) {
         Client client = (Client)list.get(getTableIndex(table));
         list.remove(client);
-        managementSystemReference.writer.deleteClientFromDatabase(client);
+        managementSystemReference.getWriter().deleteClientFromDatabase(client);
         ArrayList<TableInformation> aList = managementSystemReference.getAppointmentList();
         for(int i = 0; i < aList.size(); i++) {
             Appointment appointment = (Appointment)aList.get(i);
@@ -609,7 +609,7 @@ public class Menu {
             String note = noteField.getText();
             Client client = new Client(name,intAge,phone,email,industry,note);
             managementSystemReference.addClientToList(client);
-            managementSystemReference.writer.saveClientToDatabase(client);
+            managementSystemReference.getWriter().saveClientToDatabase(client);
             nameField.setText("");
             ageField.setText("");
             phoneField.setText("");
@@ -751,7 +751,7 @@ public class Menu {
         return panel;
     }
 
-    public void setLoginCredentials(String username, String password) {
+    public void setLoginCredentials(String username, String password, JDialog dialog) {
         this.username = username;
         this.password = password;
         System.out.println("Username: "+username + " Password: " + password);
@@ -762,6 +762,7 @@ public class Menu {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        dialog.dispose();
     }
 
     /**
@@ -847,7 +848,7 @@ public class Menu {
         noSQL.addActionListener(A -> System.exit(0));
         dialog.add(noSQL, gbc);
 
-        login.addActionListener(A -> setLoginCredentials(usernameField.getText(),passwordField.getText()));
+        login.addActionListener(A -> setLoginCredentials(usernameField.getText(),passwordField.getText(), dialog));
 
         dialog.setSize(300,300); //TODO: Change start position on screen.
         dialog.setBounds((screenWidth-300)/2,(screenHeight-300)/2,300,300);

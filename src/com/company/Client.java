@@ -58,8 +58,8 @@ public class Client implements TableInformation{
         this.id = id;
     }
 
-    public void setNote(String issue) {
-        this.note = issue;
+    public void setNote(String note) {
+        this.note = note;
     }
 
     public void setIndustry(String industry) {

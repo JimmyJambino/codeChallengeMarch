@@ -6,8 +6,8 @@ import java.util.Random;
 
 public class ManagementSystem {
 
-    JDBCWriter writer = new JDBCWriter(this);
-    JDBCReader reader = new JDBCReader(this);
+    private JDBCWriter writer = new JDBCWriter(this);
+    private JDBCReader reader = new JDBCReader(this);
     private Menu menu = new Menu(this);
     private ArrayList<TableInformation> appointmentList = new ArrayList<>();
     private ArrayList<TableInformation> clientList = new ArrayList<>();
@@ -116,6 +116,13 @@ public class ManagementSystem {
             }
         }
         return null;
+    }
+
+    public JDBCWriter getWriter() {
+        return writer;
+    }
+    public JDBCReader getReader() {
+        return reader;
     }
 
 }
